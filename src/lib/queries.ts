@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getCategories, getProducts, getProductsByCategory } from "./api";
+import { getCategories, getProducts, getProductsByCategory, getProductBySlug } from "./api";
 
 export const useCategories = () => {
   return useQuery({
@@ -34,6 +34,14 @@ export const useCategoryProducts = (
   return useQuery({
     queryKey: ["category-products", slug, params],
     queryFn: () => getProductsByCategory(slug, params),
+    enabled: !!slug,
+  });
+};
+
+export const useProductBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ["product", slug],
+    queryFn: () => getProductBySlug(slug),
     enabled: !!slug,
   });
 };

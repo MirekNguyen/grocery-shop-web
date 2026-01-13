@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Heart, Info } from "lucide-react";
 import { formatCurrency, formatUnitPrice } from "@/lib/formatters";
+import { Link } from "react-router-dom";
 import {
   Tooltip,
   TooltipContent,
@@ -27,8 +28,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Card className="group relative h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl border-border/50 bg-card hover:-translate-y-1 rounded-lg">
+      <Link to={`/product/${product.slug}`} className="absolute inset-0 z-0">
+        <span className="sr-only">View product</span>
+      </Link>
+
       {/* Badges Overlay */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 pointer-events-none">
         {product.inPromotion && (
           <Badge variant="destructive" className="font-semibold shadow-sm">
             Akce
@@ -42,7 +47,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-         <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md hover:bg-white">
+         <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md hover:bg-white relative z-20">
             <Heart className="h-4 w-4 text-gray-600" />
          </Button>
       </div>
@@ -64,7 +69,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-grow p-4 flex flex-col gap-2">
+      <CardContent className="flex-grow p-4 flex flex-col gap-2 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
              <div className="text-xs text-muted-foreground font-medium tracking-wide uppercase truncate max-w-[150px]">
                 {product.brand || "Generické"}
@@ -72,7 +77,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <TooltipProvider>
                 <Tooltip delayDuration={300}>
                     <TooltipTrigger asChild>
-                         <Info className="h-4 w-4 text-muted-foreground/50 hover:text-primary cursor-help" />
+                         {/* Make tooltip trigger interactive */}
+                         <div className="pointer-events-auto">
+                            <Info className="h-4 w-4 text-muted-foreground/50 hover:text-primary cursor-help" />
+                         </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[200px] text-xs">
                         <p>{product.descriptionLong || product.descriptionShort || product.productMarketing || "No description available"}</p>
@@ -105,10 +113,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
+        {/* Z-index 20 to sit above the card link */}
         <Button 
-            className="w-full font-semibold shadow-sm group-hover:bg-primary/90 transition-all active:scale-95" 
+            className="w-full font-semibold shadow-sm group-hover:bg-primary/90 transition-all active:scale-95 relative z-20" 
             size="lg"
-            onClick={() => addItem(product)}
+            onClick={(e) => {
+                e.preventDefault(); // Prevent navigation
+                addItem(product);
+            }}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Do košíku
