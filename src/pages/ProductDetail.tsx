@@ -125,8 +125,8 @@ const ProductDetail = () => {
               </div>
               
               <div className="text-sm text-muted-foreground mb-6">
-                {product.unitPrice && product.volumeLabelShort 
-                    ? formatUnitPrice(product.unitPrice * 100, product.volumeLabelShort)
+                {product.pricePerUnit && product.volumeLabelShort 
+                    ? formatUnitPrice(product.pricePerUnit, product.volumeLabelShort)
                     : product.packageLabel || "Cena za kus"}
                 <span className="mx-2">•</span>
                 <span className={product.published ? "text-green-600 font-medium" : "text-red-500"}>

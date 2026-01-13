@@ -105,8 +105,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 )}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-                {product.unitPrice && product.volumeLabelShort 
-                    ? formatUnitPrice(product.unitPrice * 100, product.volumeLabelShort)
+                {product.pricePerUnit && product.volumeLabelShort 
+                    ? formatUnitPrice(product.pricePerUnit, product.volumeLabelShort)
                     : product.packageLabel || "Kus"}
             </div>
         </div>
