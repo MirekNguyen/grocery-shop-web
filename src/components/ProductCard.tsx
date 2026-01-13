@@ -16,8 +16,22 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const isDiscounted = product.discountPrice !== null;
-  const currentPrice = isDiscounted ? product.discountPrice! : product.price;
+  // Use price (current price in cents) directly as per spec
+  // If discountPrice exists and is different/lower, the API spec says 'price' is the current price
+  // But usually 'price' is current, 'regularPrice' is old.
+  // The spec says:
+  // price: Current price in cents
+  // regularPrice: Regular price (before discount)
+  // discountPrice: Original price (when on sale) <- This description in spec seems inverted or confusing?
+  // Let's assume:
+  // price = active price
+  // regularPrice = strikethrough price if inPromotion is true
+  
+  const currentPrice = product.price ?? 0;
+  const showDiscount = product.inPromotion && product.regularPrice && product.regularPrice > currentPrice;
+  const discountPercentage = showDiscount
+    ? Math.round(((product.regularPrice! - currentPrice) / product.regularPrice!) * 100)
+    : 0;
 
   return (
     <Card className="group relative h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl border-border/50 bg-card hover:-translate-y-1 rounded-lg">
@@ -28,9 +42,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             Akce
           </Badge>
         )}
-        {isDiscounted && (
+        {showDiscount && (
           <Badge className="bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm">
-            -{Math.round(((product.regularPrice - currentPrice) / product.regularPrice) * 100)}%
+            -{discountPercentage}%
           </Badge>
         )}
       </div>
@@ -43,7 +57,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
       <CardHeader className="p-0">
         <div className="aspect-[4/3] w-full overflow-hidden bg-white p-4 flex items-center justify-center">
-            {product.images[0] ? (
+            {product.images && product.images.length > 0 ? (
                  <img
                  src={product.images[0]}
                  alt={product.name}
@@ -60,7 +74,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
       <CardContent className="flex-grow p-4 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-             <div className="text-xs text-muted-foreground font-medium tracking-wide uppercase">
+             <div className="text-xs text-muted-foreground font-medium tracking-wide uppercase truncate max-w-[150px]">
                 {product.brand || "Generické"}
             </div>
             <TooltipProvider>
@@ -69,13 +83,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                          <Info className="h-4 w-4 text-muted-foreground/50 hover:text-primary cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[200px] text-xs">
-                        <p>{product.descriptionLong || product.descriptionShort}</p>
+                        <p>{product.descriptionLong || product.descriptionShort || product.productMarketing || "No description available"}</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         </div>
        
-        <h3 className="font-semibold text-base leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-base leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors min-h-[40px]">
           {product.name}
         </h3>
 
@@ -84,14 +98,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 <span className="text-xl font-bold text-primary">
                     {formatCurrency(currentPrice)}
                 </span>
-                {isDiscounted && (
+                {showDiscount && (
                     <span className="text-sm text-muted-foreground line-through decoration-destructive/50">
-                        {formatCurrency(product.regularPrice)}
+                        {formatCurrency(product.regularPrice!)}
                     </span>
                 )}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-                {formatUnitPrice(product.unitPrice * 100, product.packageLabelKey)}
+                {product.unitPrice && product.volumeLabelShort 
+                    ? formatUnitPrice(product.unitPrice * 100, product.volumeLabelShort)
+                    : product.packageLabel || "Kus"}
             </div>
         </div>
       </CardContent>
