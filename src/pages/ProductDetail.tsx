@@ -15,6 +15,7 @@ import { ChevronRight, Home, ShoppingCart, Heart, Share2 } from "lucide-react";
 import { useCart } from "@/lib/context/cart-context";
 import { ProductList } from "@/components/ProductList";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import { ProductWithCategories } from "@/types";
 
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -27,7 +28,7 @@ const ProductDetail = () => {
     limit: 4,
   });
 
-  const relatedProducts = relatedData?.data.filter(p => p.id !== product?.id).slice(0, 4) || [];
+  const relatedProducts = relatedData?.data.filter((p: ProductWithCategories) => p.id !== product?.id).slice(0, 4) || [];
 
   if (isLoading) {
     return <ProductSkeleton />;
@@ -125,9 +126,12 @@ const ProductDetail = () => {
               </div>
               
               <div className="text-sm text-muted-foreground mb-6">
-                {product.pricePerUnit && product.volumeLabelShort 
-                    ? formatUnitPrice(product.pricePerUnit, product.volumeLabelShort)
-                    : product.packageLabel || "Cena za kus"}
+                {product.pricePerUnit && product.baseUnitShort
+                    ? formatUnitPrice(product.pricePerUnit, product.baseUnitShort)
+                    : (product.pricePerUnit && product.volumeLabelShort 
+                        ? formatUnitPrice(product.pricePerUnit, product.volumeLabelShort)
+                        : product.packageLabel || "Cena za kus")
+                }
                 <span className="mx-2">•</span>
                 <span className={product.published ? "text-green-600 font-medium" : "text-red-500"}>
                     {product.published ? "Skladem" : "Nedostupné"}
@@ -166,6 +170,9 @@ const ProductDetail = () => {
                     <span className="text-muted-foreground">Hmotnost/Objem:</span>
                     <span>{product.amount} {product.volumeLabelShort}</span>
                     
+                    <span className="text-muted-foreground">Srovnávací jednotka:</span>
+                    <span>{product.baseUnitLong || product.baseUnitShort || "-"}</span>
+
                     <span className="text-muted-foreground">SKU:</span>
                     <span>{product.sku}</span>
                   </div>
