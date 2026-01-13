@@ -3,15 +3,17 @@ import { useCategories, useProducts } from "@/lib/queries";
 import { ProductList } from "@/components/ProductList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/lib/context/cart-context";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
+  const { itemCount, setIsOpen } = useCart();
   
   // URL state management could be added here (useSearchParams), but keeping it local for now
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | undefined>(undefined);
@@ -83,7 +85,19 @@ const Index = () => {
                     Filtry
                  </Button>
                  <div className="h-8 w-px bg-border mx-2" />
-                 <Button size="sm">Košík (0)</Button>
+                 <Button 
+                    size="sm" 
+                    className="relative"
+                    onClick={() => setIsOpen(true)}
+                 >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Košík 
+                    {itemCount > 0 && (
+                        <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 bg-white/20 text-white hover:bg-white/30 border-none">
+                            {itemCount}
+                        </Badge>
+                    )}
+                 </Button>
              </div>
         </div>
       </header>

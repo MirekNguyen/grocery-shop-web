@@ -10,22 +10,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCart } from "@/lib/context/cart-context";
 
 interface ProductCardProps {
   product: ProductWithCategories;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  // Use price (current price in cents) directly as per spec
-  // If discountPrice exists and is different/lower, the API spec says 'price' is the current price
-  // But usually 'price' is current, 'regularPrice' is old.
-  // The spec says:
-  // price: Current price in cents
-  // regularPrice: Regular price (before discount)
-  // discountPrice: Original price (when on sale) <- This description in spec seems inverted or confusing?
-  // Let's assume:
-  // price = active price
-  // regularPrice = strikethrough price if inPromotion is true
+  const { addItem } = useCart();
   
   const currentPrice = product.price ?? 0;
   const showDiscount = product.inPromotion && product.regularPrice && product.regularPrice > currentPrice;
@@ -113,7 +105,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full font-semibold shadow-sm group-hover:bg-primary/90 transition-all active:scale-95" size="lg">
+        <Button 
+            className="w-full font-semibold shadow-sm group-hover:bg-primary/90 transition-all active:scale-95" 
+            size="lg"
+            onClick={() => addItem(product)}
+        >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Do košíku
         </Button>
