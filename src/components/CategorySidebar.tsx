@@ -16,12 +16,14 @@ export const CategorySidebar = () => {
   const categories = useMemo(() => {
     if (!categoriesData) return [];
 
-    if (selectedStore) {
-      // Strictly return categories for the selected store
-      return categoriesData[selectedStore] || [];
+    // If a store is selected, look for that specific key.
+    // If the API returns { "FOODORA_ALBERT_FLORENC": [...] }, we want that array.
+    if (selectedStore && categoriesData[selectedStore]) {
+      return categoriesData[selectedStore];
     }
 
-    // If no store is selected, show all categories flattened
+    // If no store is selected (or key mismatch), flatten all available values.
+    // This covers the "All Stores" case.
     return Object.values(categoriesData)
       .flat()
       .sort((a, b) => a.name.localeCompare(b.name));
