@@ -38,10 +38,8 @@ export const Header = ({ onSearch }: HeaderProps) => {
             <span className="hidden sm:inline truncate">Grocer<span className="text-primary/70">App</span></span>
         </Link>
 
-        {/* Store Selector - Visible on both mobile (icon) and desktop (full) */}
-        <div className="flex-shrink-0">
-            <StoreSelector />
-        </div>
+        {/* Store Selector */}
+        <StoreSelector />
 
         <div className="hidden md:flex flex-1 max-w-md relative mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
