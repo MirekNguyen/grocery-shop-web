@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   CategoryWithCount,
+  CategoriesResponse,
   PaginatedProductResponse,
   ProductWithCategories,
   StoreInfo,
@@ -32,8 +33,9 @@ export const getProducts = async (params?: {
   return data;
 };
 
-export const getCategories = async (): Promise<CategoryWithCount[]> => {
-  const { data } = await api.get("/api/categories");
+export const getCategories = async (store?: string | null): Promise<CategoriesResponse> => {
+  const params = store ? { store } : {};
+  const { data } = await api.get("/api/categories", { params });
   return data;
 };
 

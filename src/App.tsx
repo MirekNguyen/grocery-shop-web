@@ -1,32 +1,42 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CartProvider } from "@/lib/context/cart-context";
+import { BrowserRouter } from "react-router-dom";
 import { StoreProvider } from "@/lib/context/store-context";
-import Index from "./pages/Home";
-import ProductDetail from "./pages/ProductDetail";
+import { CartProvider } from "@/lib/context/cart-context";
+import { Header } from "@/components/Header";
+import { CategorySidebar } from "@/components/CategorySidebar";
+import { StoreView } from "@/components/StoreView";
+import { CartSheet } from "@/components/CartSheet";
+import { Toaster } from "@/components/ui/toaster";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  return (
+    <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/product/:slug" element={<ProductDetail />} />
-            </Routes>
+            <div className="min-h-screen bg-background font-sans antialiased">
+              <Header onSearch={setSearchQuery} />
+              
+              <div className="flex">
+                <CategorySidebar />
+                <main className="flex-1 overflow-x-hidden">
+                  <StoreView searchQuery={searchQuery} />
+                </main>
+              </div>
+              
+              <CartSheet />
+              <Toaster />
+            </div>
           </BrowserRouter>
         </CartProvider>
       </StoreProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;

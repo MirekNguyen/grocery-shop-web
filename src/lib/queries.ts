@@ -28,10 +28,10 @@ export const useProducts = (params?: {
   });
 };
 
-export const useCategories = () => {
+export const useCategories = (store?: string | null) => {
   return useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
+    queryKey: ["categories", store],
+    queryFn: () => getCategories(store),
   });
 };
 

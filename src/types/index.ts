@@ -3,15 +3,18 @@ export interface Category {
   key: string;
   name: string;
   slug: string;
-  orderHint: string;
+  orderHint: string | null;
   productCount?: number;
   createdAt: string | Date | null;
   updatedAt: string | Date | null;
+  store?: string;
 }
 
 export interface CategoryWithCount extends Category {
   productCount: number;
 }
+
+export type CategoriesResponse = Record<string, CategoryWithCount[]>;
 
 export interface Product {
   id: number;
@@ -52,8 +55,8 @@ export interface Product {
   packageLabelKey?: string | null;
   volumeLabelKey?: string | null;
   volumeLabelShort: string | null;
-  baseUnitShort?: string | null; // Added for compatibility with existing components
-  baseUnitLong?: string | null;  // Added for compatibility with existing components
+  baseUnitShort?: string | null;
+  baseUnitLong?: string | null;
   
   // Content
   images: string[];
@@ -64,7 +67,7 @@ export interface Product {
   scrapedAt: string | Date | null;
   updatedAt: string | Date | null;
   
-  // Store info (optional in product, usually comes from context or specific endpoints)
+  // Store info
   store?: string;
 }
 
