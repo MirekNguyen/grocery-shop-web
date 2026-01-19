@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Search, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ interface HeaderProps {
 export const Header = ({ onSearch }: HeaderProps) => {
   const [localSearch, setLocalSearch] = useState("");
   const { itemCount, setIsOpen } = useCart();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Debounce search input to avoid too many re-renders/fetches
   const debouncedSearch = useDebounce(localSearch, 500);
@@ -23,6 +24,22 @@ export const Header = ({ onSearch }: HeaderProps) => {
   useEffect(() => {
     onSearch(debouncedSearch);
   }, [debouncedSearch, onSearch]);
+
+  // Handle "/" shortcut to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey) {
+        // Don't trigger if user is already typing in an input
+        if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -44,6 +61,7 @@ export const Header = ({ onSearch }: HeaderProps) => {
         <div className="hidden md:flex flex-1 max-w-md relative mx-auto group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
+                ref={searchInputRef}
                 placeholder="Hledat produkty..." 
                 className="pl-9 pr-12 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all"
                 value={localSearch}
@@ -51,7 +69,7 @@ export const Header = ({ onSearch }: HeaderProps) => {
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none">
                 <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                    <span className="text-xs">⌘</span>K
+                    <span className="text-xs">/</span>
                 </kbd>
             </div>
         </div>
