@@ -6,6 +6,7 @@ import { CartProvider } from "@/lib/context/cart-context";
 import { Header } from "@/components/Header";
 import { MainLayout } from "@/components/MainLayout";
 import { CartSheet } from "@/components/CartSheet";
+import { CommandMenu } from "@/components/CommandMenu";
 import { Toaster } from "@/components/ui/toaster";
 import ProductDetail from "@/pages/ProductDetail";
 import NotFound from "@/pages/NotFound";
@@ -37,6 +38,7 @@ function App() {
               </Routes>
               
               <CartSheet />
+              <CommandMenu />
               <Toaster />
             </div>
           </BrowserRouter>

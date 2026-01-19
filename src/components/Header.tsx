@@ -41,14 +41,19 @@ export const Header = ({ onSearch }: HeaderProps) => {
         {/* Store Selector */}
         <StoreSelector />
 
-        <div className="hidden md:flex flex-1 max-w-md relative mx-auto">
+        <div className="hidden md:flex flex-1 max-w-md relative mx-auto group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
                 placeholder="Hledat produkty..." 
-                className="pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all"
+                className="pl-9 pr-12 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all"
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
             />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none">
+                <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                    <span className="text-xs">⌘</span>K
+                </kbd>
+            </div>
         </div>
 
          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
