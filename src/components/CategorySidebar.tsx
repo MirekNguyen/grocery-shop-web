@@ -21,19 +21,21 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
   
-  // Check if any descendant is active OR if the current category is active
+  // Calculate if we should auto-expand based on active state
   const shouldAutoExpand = useMemo(() => {
-    // If we are active and have subcategories, we should be expanded to show them
     if (active && hasSubcategories) return true;
-
     if (!hasSubcategories) return false;
+    
+    // Check if any child is active
     const findActive = (cats: CategoryWithCount[]): boolean => {
         return cats.some(c => isActive(c.slug) || (c.subcategories && findActive(c.subcategories)));
     };
     return findActive(category.subcategories!);
   }, [category, hasSubcategories, isActive, active]);
 
-  // Sync expansion state with active children/self
+  // Sync expansion state with active children/self only when the "need" to expand changes
+  // This prevents the effect from fighting the user if they manually collapse it while active,
+  // because the effect only runs when 'shouldAutoExpand' flips from false to true.
   useEffect(() => {
       if (shouldAutoExpand) {
           setIsExpanded(true);
@@ -44,6 +46,16 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
       e.preventDefault();
       e.stopPropagation();
       setIsExpanded((prev) => !prev);
+  };
+
+  const handleLinkClick = (e: React.MouseEvent) => {
+      if (onSelect) onSelect();
+      
+      // If we are already active and have subcategories, treat the click as a toggle
+      if (active && hasSubcategories) {
+          e.preventDefault(); 
+          setIsExpanded(prev => !prev);
+      }
   };
 
   return (
@@ -61,9 +73,9 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
 
         <Link 
             to={`/?category=${category.slug}`}
-            onClick={onSelect}
+            onClick={handleLinkClick}
             className={cn(
-                "flex-1 flex items-center min-w-0 py-2 pl-2 pr-1 text-sm select-none",
+                "flex-1 flex items-center min-w-0 py-2 pl-2 pr-1 text-sm select-none cursor-pointer",
                 active ? "font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             title={category.name}
@@ -71,7 +83,7 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
             <span className="truncate flex-1">
                 {category.name}
             </span>
-            <span className="ml-2 text-[10px] text-muted-foreground/60 tabular-nums bg-muted/50 px-1.5 py-0.5 rounded-full">
+            <span className="ml-2 text-[10px] text-muted-foreground/60 tabular-nums bg-muted/50 px-1.5 py-0.5 rounded-full shrink-0">
                 {category.productCount}
             </span>
         </Link>
