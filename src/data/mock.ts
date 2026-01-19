@@ -67,6 +67,7 @@ export const mockProducts: ProductWithCategories[] = [
     ],
     productMarketing: "Francouzská klasika z českých surovin. \nČeská potravina",
     published: true,
+    store: "BILLA",
   },
   {
     id: 2,
@@ -95,6 +96,7 @@ export const mockProducts: ProductWithCategories[] = [
     ],
     productMarketing: "Čerstvá jablka z českých sadů",
     published: true,
+    store: "FOODORA",
   },
   {
     id: 3,
@@ -123,6 +125,7 @@ export const mockProducts: ProductWithCategories[] = [
     ],
     productMarketing: "Výborné kešu ořechy pro zdravou svačinu",
     published: true,
+    store: "BILLA",
   },
   {
     id: 4,
@@ -152,6 +155,7 @@ export const mockProducts: ProductWithCategories[] = [
     productMarketing:
       "Dozdobit můžete pravou čokoládou a své hosty překvapíte luxusním a krásným dortem",
     published: true,
+    store: "FOODORA",
   },
   {
     id: 5,
@@ -180,6 +184,7 @@ export const mockProducts: ProductWithCategories[] = [
     ],
     productMarketing: "Čerstvá cibulka přímo z pole",
     published: true,
+    store: "BILLA",
   },
   {
     id: 6,
@@ -208,5 +213,6 @@ export const mockProducts: ProductWithCategories[] = [
     ],
     productMarketing: "Čerstvé citrony pro vaše oblíbené recepty",
     published: true,
+    store: "FOODORA",
   },
 ];

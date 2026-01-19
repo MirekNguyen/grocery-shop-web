@@ -1,5 +1,25 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getCategories, getProducts, getProductsByCategory, getProductBySlug } from "./api";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getProducts,
+  getCategories,
+  getProductBySlug,
+  getProductsByCategory,
+} from "./api";
+import { StoreType } from "@/types";
+
+export const useProducts = (params?: {
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  inPromotion?: boolean;
+  store?: StoreType;
+}) => {
+  return useQuery({
+    queryKey: ["products", params],
+    queryFn: () => getProducts(params),
+  });
+};
 
 export const useCategories = () => {
   return useQuery({
@@ -8,40 +28,21 @@ export const useCategories = () => {
   });
 };
 
-export const useProducts = (params: {
-  category?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-  inPromotion?: boolean;
-}) => {
-  return useQuery({
-    queryKey: ["products", params],
-    queryFn: () => {
-      // If a category slug is provided, we can use the specific endpoint or the general one.
-      // The general endpoint supports filtering by category slug via query param.
-      // Based on the spec, /api/products?category=slug works.
-      return getProducts(params);
-    },
-    placeholderData: keepPreviousData,
-  });
-};
-
-export const useCategoryProducts = (
-  slug: string,
-  params: { page?: number; limit?: number } = {}
-) => {
-  return useQuery({
-    queryKey: ["category-products", slug, params],
-    queryFn: () => getProductsByCategory(slug, params),
-    enabled: !!slug,
-  });
-};
-
 export const useProductBySlug = (slug: string) => {
   return useQuery({
     queryKey: ["product", slug],
     queryFn: () => getProductBySlug(slug),
+    enabled: !!slug,
+  });
+};
+
+export const useProductsByCategory = (
+  slug: string,
+  params?: { page?: number; limit?: number; store?: StoreType }
+) => {
+  return useQuery({
+    queryKey: ["products-by-category", slug, params],
+    queryFn: () => getProductsByCategory(slug, params),
     enabled: !!slug,
   });
 };

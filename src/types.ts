@@ -11,7 +11,7 @@ export interface Product {
   pricePerUnit?: number; // Price per base unit in cents
   unitPrice?: number; // Legacy field, kept for compatibility if needed
   
-  // Base Unit Fields (New)
+  // Base Unit Fields
   baseUnitShort: string | null;     // "kg", "l", "ks"
   baseUnitLong: string | null;      // "Kilogram", "Liter", "Kus"
   
@@ -37,6 +37,9 @@ export interface Product {
   
   // Identifiers
   sku: string;
+  
+  // Store
+  store?: "BILLA" | "FOODORA";
 }
 
 export interface Category {
@@ -46,13 +49,7 @@ export interface Category {
   productCount: number;
 }
 
-// Adding the missing interface that was requested
-export interface CategoryWithCount extends Category {
-  // Category already has productCount, but if the API expects a separate type, 
-  // we can extend it here. If productCount is the only difference and it's 
-  // already on Category, this is just an alias or extension.
-  // Based on the error, it seems this type was expected but missing.
-}
+export interface CategoryWithCount extends Category {}
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -66,5 +63,6 @@ export interface PaginatedResponse<T> {
 
 export type ProductWithCategories = Product;
 
-// Adding the missing alias
 export type PaginatedProductResponse = PaginatedResponse<ProductWithCategories>;
+
+export type StoreType = "BILLA" | "FOODORA" | null;

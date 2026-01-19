@@ -3,6 +3,7 @@ import {
   CategoryWithCount,
   PaginatedProductResponse,
   ProductWithCategories,
+  StoreType,
 } from "@/types";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
@@ -20,6 +21,7 @@ export const getProducts = async (params?: {
   page?: number;
   limit?: number;
   inPromotion?: boolean;
+  store?: StoreType;
 }): Promise<PaginatedProductResponse> => {
   const { data } = await api.get("/api/products", { params });
   return data;
@@ -39,10 +41,8 @@ export const getProductBySlug = async (
 
 export const getProductsByCategory = async (
   slug: string,
-  params?: { page?: number; limit?: number }
+  params?: { page?: number; limit?: number; store?: StoreType }
 ): Promise<PaginatedProductResponse> => {
-  // Note: The API endpoint structure is slightly different for category-specific products
-  // /api/categories/{slug}/products
   const { data } = await api.get(`/api/categories/${slug}/products`, {
     params,
   });

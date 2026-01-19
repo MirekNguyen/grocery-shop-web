@@ -2,7 +2,7 @@ import { ProductWithCategories } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, Info } from "lucide-react";
+import { ShoppingCart, Heart, Info, Store } from "lucide-react";
 import { formatCurrency, formatUnitPrice } from "@/lib/formatters";
 import { Link } from "react-router-dom";
 import {
@@ -46,8 +46,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         )}
       </div>
 
-      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-         <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md hover:bg-white relative z-20">
+      <div className="absolute top-3 right-3 z-10 flex gap-2">
+         {/* Store Badge */}
+         {product.store && (
+             <Badge variant="outline" className="bg-white/80 backdrop-blur-sm font-bold text-xs gap-1 shadow-sm">
+                 <Store className="h-3 w-3" />
+                 {product.store}
+             </Badge>
+         )}
+
+         <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md hover:bg-white relative z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <Heart className="h-4 w-4 text-gray-600" />
          </Button>
       </div>
