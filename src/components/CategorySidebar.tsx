@@ -4,9 +4,10 @@ import { CategoryWithCount } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronRight, LayoutGrid } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface CategoryItemProps {
   category: CategoryWithCount;
@@ -64,6 +65,7 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
             onClick={handleLinkClick}
             className={cn(
                 "flex-1 flex items-center min-w-0 py-1.5 pr-2 select-none cursor-pointer",
+                level === 0 ? "pl-3" : "pl-3"
             )}
             style={{ paddingLeft: level === 0 ? '0.75rem' : `${(level * 0.75) + 0.75}rem` }}
             title={category.name}
@@ -160,8 +162,6 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
     );
   }
 
-  const isAllProductsActive = !activeCategorySlug;
-
   return (
     <div className={cn("bg-background flex flex-col h-full border-r", className)}>
       <div className="space-y-4 py-4 flex-1">
@@ -171,44 +171,32 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
           </h2>
           <ScrollArea className="h-[calc(100vh-10rem)] px-1">
             <div className="space-y-1 pb-10 pr-2">
-               {/* "All Products" Link styled exactly like a Category Item */}
-               <div className="w-full text-sm">
-                  <div 
-                    className={cn(
-                        "flex items-center w-full group relative rounded-md transition-colors min-h-[32px]",
-                        isAllProductsActive ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                    )}
-                  >
-                    <Link 
-                        to="/"
-                        onClick={onSelect}
-                        className="flex-1 flex items-center min-w-0 py-1.5 pr-2 pl-3 select-none cursor-pointer"
-                        title="Všechny produkty"
-                    >
-                        <LayoutGrid className="mr-2 h-4 w-4 opacity-70" />
-                        <span className="truncate flex-1">
-                            Všechny produkty
-                        </span>
-                    </Link>
-                  </div>
-               </div>
+               <Link 
+                to="/"
+                onClick={onSelect}
+                className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "w-full justify-start mb-2 px-3",
+                    !activeCategorySlug && "bg-accent text-accent-foreground font-medium"
+                )}
+               >
+                    Všechny produkty
+                </Link>
 
                 {categories.length === 0 && (
-                    <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20 mt-2">
+                    <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
                         Žádné kategorie
                     </div>
                 )}
 
-                <div className="mt-2">
-                    {categories.map((category) => (
-                    <CategoryItem 
-                        key={`${category.store}-${category.id}`} 
-                        category={category} 
-                        isActive={isActive} 
-                        onSelect={onSelect}
-                    />
-                    ))}
-                </div>
+                {categories.map((category) => (
+                <CategoryItem 
+                    key={`${category.store}-${category.id}`} 
+                    category={category} 
+                    isActive={isActive} 
+                    onSelect={onSelect}
+                />
+                ))}
             </div>
           </ScrollArea>
         </div>
