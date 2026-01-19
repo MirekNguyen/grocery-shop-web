@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useProducts } from "@/lib/queries";
+import { useProducts, useCategories } from "@/lib/queries";
 import { useStore } from "@/lib/context/store-context";
 import { ProductList } from "@/components/ProductList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { CategoryWithCount } from "@/types";
 
 interface StoreViewProps {
   searchQuery: string;
@@ -46,6 +47,26 @@ export const StoreView = ({ searchQuery }: StoreViewProps) => {
     store: selectedStore,
   });
 
+  // Fetch categories to resolve slug to name
+  const { data: categoriesData } = useCategories(selectedStore);
+
+  const categoryName = useMemo(() => {
+    if (!categorySlug || !categoriesData) return undefined;
+    
+    const findCategory = (categories: CategoryWithCount[]): string | undefined => {
+        for (const cat of categories) {
+            if (cat.slug === categorySlug) return cat.name;
+            if (cat.subcategories) {
+                const found = findCategory(cat.subcategories);
+                if (found) return found;
+            }
+        }
+        return undefined;
+    };
+
+    return findCategory(Object.values(categoriesData).flat());
+  }, [categoriesData, categorySlug]);
+
   const products = productsData?.data || [];
   const pagination = productsData?.pagination;
   const totalProducts = pagination?.total || 0;
@@ -62,7 +83,7 @@ export const StoreView = ({ searchQuery }: StoreViewProps) => {
         <div>
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                 {searchQuery ? `Výsledky pro "${searchQuery}"` : 
-                 categorySlug ? "Produkty v kategorii" : 
+                 categorySlug ? (categoryName || "Produkty v kategorii") : 
                  "Všechny produkty"}
                 
                 {!isLoading && (
