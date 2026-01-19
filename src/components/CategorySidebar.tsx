@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface CategoryItemProps {
@@ -21,7 +21,7 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
   
-  // Automatically expand if a child is active
+  // Check if any descendant is active
   const isChildActive = useMemo(() => {
     if (!hasSubcategories) return false;
     const findActive = (cats: CategoryWithCount[]): boolean => {
@@ -30,10 +30,18 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
     return findActive(category.subcategories!);
   }, [category, hasSubcategories, isActive]);
 
-  // Sync expansion state with active children on mount/update
-  useMemo(() => {
-      if (isChildActive) setIsExpanded(true);
+  // Sync expansion state with active children
+  useEffect(() => {
+      if (isChildActive) {
+          setIsExpanded(true);
+      }
   }, [isChildActive]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsExpanded((prev) => !prev);
+  };
 
   return (
     <div className="w-full">
@@ -69,12 +77,8 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
              <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 mr-1 hover:bg-background/80"
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsExpanded(!isExpanded);
-                }}
+                className="h-8 w-8 shrink-0 mr-1 hover:bg-background/80 active:translate-y-0.5 transition-transform"
+                onClick={handleToggle}
              >
                  {isExpanded ? 
                     <ChevronDown className="h-3.5 w-3.5 opacity-50" /> : 
@@ -86,8 +90,8 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
 
       {hasSubcategories && isExpanded && (
         <div className={cn(
-            "mt-1 space-y-0.5",
-            level === 0 ? "pl-2" : "pl-3 border-l ml-2" // Better visual hierarchy
+            "mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200",
+            level === 0 ? "pl-2" : "pl-3 border-l ml-2" 
         )}>
           {category.subcategories!.map((sub) => (
             <CategoryItem 
@@ -127,7 +131,10 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [categoriesData, selectedStore]);
 
-  const isActive = (slug: string) => activeCategorySlug === slug;
+  // Memoize the isActive function to prevent unnecessary re-renders in children
+  const isActive = useCallback((slug: string) => {
+      return activeCategorySlug === slug;
+  }, [activeCategorySlug]);
 
   if (isLoading) {
     return (
