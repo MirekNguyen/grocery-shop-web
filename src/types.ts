@@ -39,7 +39,7 @@ export interface Product {
   sku: string;
   
   // Store
-  store: "BILLA" | "FOODORA";
+  store?: "BILLA" | "FOODORA";
 }
 
 export interface Category {
