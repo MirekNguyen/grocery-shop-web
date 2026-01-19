@@ -4,8 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { StoreProvider } from "@/lib/context/store-context";
 import { CartProvider } from "@/lib/context/cart-context";
 import { Header } from "@/components/Header";
-import { CategorySidebar } from "@/components/CategorySidebar";
-import { StoreView } from "@/components/StoreView";
+import { MainLayout } from "@/components/MainLayout";
 import { CartSheet } from "@/components/CartSheet";
 import { Toaster } from "@/components/ui/toaster";
 import ProductDetail from "@/pages/ProductDetail";
@@ -27,18 +26,7 @@ function App() {
               <Routes>
                 <Route 
                   path="/" 
-                  element={
-                    <div className="flex flex-1 overflow-hidden">
-                      {/* Desktop Sidebar: Visible only on large screens */}
-                      <aside className="hidden lg:block w-64 border-r bg-background/50 overflow-y-auto">
-                        <CategorySidebar />
-                      </aside>
-                      
-                      <main className="flex-1 overflow-y-auto overflow-x-hidden">
-                        <StoreView searchQuery={searchQuery} />
-                      </main>
-                    </div>
-                  } 
+                  element={<MainLayout searchQuery={searchQuery} />} 
                 />
                 <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route path="*" element={<NotFound />} />

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronRight, Store } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface CategoryItemProps {
   category: CategoryWithCount;
@@ -123,14 +123,17 @@ interface CategorySidebarProps {
 
 export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) => {
   const { selectedStore } = useStore();
-  // Only fetch if a store is selected to save resources, though the hook might run anyway.
-  // We can pass null/undefined which the hook should handle or we just ignore the result.
   const { data: categoriesData, isLoading } = useCategories(selectedStore);
   const [searchParams] = useSearchParams();
   const activeCategorySlug = searchParams.get("category");
 
+  // If no store is selected, we don't show the sidebar at all
+  if (!selectedStore) {
+      return null;
+  }
+
   const categories = useMemo(() => {
-    if (!selectedStore || !categoriesData) return [];
+    if (!categoriesData) return [];
 
     if (categoriesData[selectedStore]) {
       return categoriesData[selectedStore];
@@ -142,8 +145,7 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
       return activeCategorySlug === slug;
   }, [activeCategorySlug]);
 
-  // Loading state only matters if we are actually showing categories (i.e. a store is selected)
-  if (selectedStore && isLoading) {
+  if (isLoading) {
     return (
       <div className={cn("bg-background", className)}>
         <div className="space-y-4 py-4">
@@ -181,34 +183,20 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
                     Všechny produkty
                 </Link>
 
-              {!selectedStore ? (
-                  <div className="mt-8 px-4 flex flex-col items-center text-center text-muted-foreground animate-in fade-in-50">
-                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                        <Store className="h-6 w-6 opacity-50" />
-                      </div>
-                      <p className="text-sm font-medium text-foreground">Vyberte obchod</p>
-                      <p className="text-xs mt-1 max-w-[180px]">
-                        Pro zobrazení kategorií zvolte konkrétní obchod v horní liště.
-                      </p>
-                  </div>
-              ) : (
-                  <>
-                      {categories.length === 0 && (
-                          <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
-                              Žádné kategorie
-                          </div>
-                      )}
+                {categories.length === 0 && (
+                    <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
+                        Žádné kategorie
+                    </div>
+                )}
 
-                      {categories.map((category) => (
-                        <CategoryItem 
-                            key={`${category.store}-${category.id}`} 
-                            category={category} 
-                            isActive={isActive} 
-                            onSelect={onSelect}
-                        />
-                      ))}
-                  </>
-              )}
+                {categories.map((category) => (
+                <CategoryItem 
+                    key={`${category.store}-${category.id}`} 
+                    category={category} 
+                    isActive={isActive} 
+                    onSelect={onSelect}
+                />
+                ))}
             </div>
           </ScrollArea>
         </div>
