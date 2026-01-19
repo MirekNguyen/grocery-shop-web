@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export const CartSheet = () => {
   const { items, removeItem, updateQuantity, cartTotal, isOpen, setIsOpen } = useCart();
@@ -114,9 +115,11 @@ export const CartSheet = () => {
                 </p>
               </div>
               <SheetFooter>
-                <Button className="w-full" size="lg">
-                  Přejít k pokladně
-                </Button>
+                <Link to="/checkout" className="w-full" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full" size="lg">
+                    Přejít k pokladně
+                    </Button>
+                </Link>
               </SheetFooter>
             </div>
           </>
