@@ -1,227 +1,193 @@
 import { useParams, Link } from "react-router-dom";
-import { useProductBySlug, useProducts } from "@/lib/queries";
-import { formatCurrency, formatUnitPrice } from "@/lib/formatters";
+import { useProduct } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { ChevronRight, Home, ShoppingCart, Heart, Share2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Home, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/context/cart-context";
-import { ProductList } from "@/components/ProductList";
+import { formatPrice } from "@/lib/utils";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { ProductWithCategories } from "@/types";
 
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data: product, isLoading, isError } = useProductBySlug(slug || "");
+  const { data: product, isLoading, isError } = useProduct(slug);
   const { addItem } = useCart();
 
-  // Fetch related products from the same category
-  const { data: relatedData } = useProducts({
-    category: product?.categorySlug,
-    limit: 4,
-  });
-
-  const relatedProducts = relatedData?.data.filter((p: ProductWithCategories) => p.id !== product?.id).slice(0, 4) || [];
-
   if (isLoading) {
-    return <ProductSkeleton />;
-  }
-
-  if (isError || !product) {
     return (
-      <div className="container min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-bold">Produkt nenalezen</h1>
-        <Button asChild>
-          <Link to="/">Zpět na hlavní stranu</Link>
-        </Button>
+      <div className="container py-8 space-y-8">
+        <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+            <Skeleton className="aspect-square w-full rounded-xl" />
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-3/4" />
+                <Skeleton className="h-6 w-1/4" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-12 w-1/3" />
+            </div>
+        </div>
       </div>
     );
   }
 
-  const currentPrice = product.price ?? 0;
-  const showDiscount = product.inPromotion && product.regularPrice && product.regularPrice > currentPrice;
-  const discountPercentage = showDiscount
-    ? Math.round(((product.regularPrice! - currentPrice) / product.regularPrice!) * 100)
+  if (isError || !product) {
+    return (
+      <div className="container py-16 text-center space-y-4">
+        <h2 className="text-2xl font-bold">Produkt nenalezen</h2>
+        <p className="text-muted-foreground">Omlouváme se, ale požadovaný produkt neexistuje nebo byl odstraněn.</p>
+        <Link to="/">
+            <Button>Zpět na nákup</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Calculate prices
+  const displayPrice = product.price ?? product.regularPrice ?? 0;
+  const finalPrice = displayPrice > 0 ? displayPrice / 100 : 0;
+  
+  const discountPercentage = product.regularPrice && product.discountPrice 
+    ? Math.round(((product.regularPrice - product.discountPrice) / product.regularPrice) * 100) 
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50/30">
-        {/* Breadcrumb Navigation */}
-        <nav className="border-b bg-white">
-            <div className="container px-4 h-12 flex items-center text-sm text-muted-foreground">
-                <Link to="/" className="hover:text-primary transition-colors flex items-center gap-1">
+    <div className="min-h-screen flex flex-col bg-background">
+        <div className="container px-4 md:px-6 py-6 flex-1">
+            {/* Breadcrumbs */}
+            <nav className="flex items-center text-sm text-muted-foreground mb-8 overflow-hidden whitespace-nowrap">
+                <Link to="/" className="hover:text-primary flex items-center gap-1">
                     <Home className="h-4 w-4" />
+                    Domů
                 </Link>
-                <ChevronRight className="h-4 w-4 mx-2 opacity-50" />
-                <span className="truncate max-w-[150px]">{product.category}</span>
-                <ChevronRight className="h-4 w-4 mx-2 opacity-50" />
-                <span className="font-medium text-foreground truncate">{product.name}</span>
-            </div>
-        </nav>
-
-      <main className="container px-4 py-8 animate-fade-in">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
-          {/* Left Column: Images */}
-          <div className="space-y-4">
-            <div className="aspect-square bg-white rounded-xl border shadow-sm overflow-hidden p-8 flex items-center justify-center relative group">
-               {showDiscount && (
-                  <Badge className="absolute top-4 left-4 z-10 bg-yellow-500 text-white text-lg px-3 py-1 shadow-md">
-                    -{discountPercentage}%
-                  </Badge>
-               )}
-               {product.images[0] ? (
-                   <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                   />
-               ) : (
-                   <div className="text-muted-foreground">Obrázek není k dispozici</div>
-               )}
-            </div>
-          </div>
-
-          {/* Right Column: Product Info */}
-          <div className="flex flex-col gap-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                 <Link to={`/?category=${product.categorySlug}`} className="text-sm font-medium text-primary hover:underline uppercase tracking-wide">
-                    {product.brand || product.category}
-                 </Link>
-                 <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <Share2 className="h-5 w-5 text-muted-foreground" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <Heart className="h-5 w-5 text-muted-foreground" />
-                    </Button>
-                 </div>
-              </div>
-              
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
-                {product.name}
-              </h1>
-              
-              <div className="flex items-baseline gap-4 mb-2">
-                <span className="text-4xl font-bold text-primary">
-                  {formatCurrency(currentPrice)}
-                </span>
-                {showDiscount && (
-                  <div className="flex flex-col">
-                    <span className="text-lg text-muted-foreground line-through decoration-destructive/50">
-                      {formatCurrency(product.regularPrice!)}
-                    </span>
-                    <span className="text-xs text-destructive font-medium">
-                        Ušetříte {formatCurrency(product.regularPrice! - currentPrice)}
-                    </span>
-                  </div>
+                <ChevronRight className="h-4 w-4 mx-2 shrink-0 opacity-50" />
+                
+                {product.categories && product.categories.length > 0 ? (
+                    product.categories.map((cat, index) => (
+                        <div key={cat.id} className="flex items-center">
+                            <Link to={`/?category=${cat.slug}`} className="hover:text-primary">
+                                {cat.name}
+                            </Link>
+                            {index < (product.categories?.length || 0) - 1 && (
+                                <ChevronRight className="h-4 w-4 mx-2 shrink-0 opacity-50" />
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <Link to={`/?category=${product.categorySlug}`} className="hover:text-primary">
+                        {product.category}
+                    </Link>
                 )}
-              </div>
-              
-              <div className="text-sm text-muted-foreground mb-6">
-                {product.pricePerUnit && product.baseUnitShort
-                    ? formatUnitPrice(product.pricePerUnit, product.baseUnitShort)
-                    : (product.pricePerUnit && product.volumeLabelShort 
-                        ? formatUnitPrice(product.pricePerUnit, product.volumeLabelShort)
-                        : product.packageLabel || "Cena za kus")
-                }
-                <span className="mx-2">•</span>
-                <span className={product.published ? "text-green-600 font-medium" : "text-red-500"}>
-                    {product.published ? "Skladem" : "Nedostupné"}
-                </span>
-              </div>
+                
+                <ChevronRight className="h-4 w-4 mx-2 shrink-0 opacity-50" />
+                <span className="font-medium text-foreground truncate">{product.name}</span>
+            </nav>
 
-              <div className="flex gap-4">
-                 <Button 
-                    size="lg" 
-                    className="flex-1 h-14 text-lg font-semibold shadow-lg shadow-primary/20"
-                    onClick={() => addItem(product)}
-                 >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Přidat do košíku
-                 </Button>
-              </div>
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-16 items-start">
+                {/* Image Gallery (Simple for now) */}
+                <div className="relative aspect-square bg-white rounded-2xl border overflow-hidden p-8 flex items-center justify-center">
+                    {product.inPromotion && (
+                        <Badge className="absolute top-4 left-4 z-10 bg-red-500 text-white text-base py-1 px-3">
+                            Akce
+                        </Badge>
+                    )}
+                    {discountPercentage > 0 && (
+                        <Badge className="absolute top-4 right-4 z-10 bg-yellow-500 text-black text-base py-1 px-3 hover:bg-yellow-600">
+                            -{discountPercentage}%
+                        </Badge>
+                    )}
+                    <img 
+                        src={product.images[0] || "/placeholder.png"} 
+                        alt={product.name} 
+                        className="w-full h-full object-contain"
+                    />
+                </div>
+
+                {/* Product Info */}
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                         <Badge variant="outline" className="text-muted-foreground uppercase tracking-wider text-[10px]">
+                            {product.brand || "Obecné"}
+                         </Badge>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 leading-tight">
+                            {product.name}
+                        </h1>
+                        <p className="text-muted-foreground text-lg">
+                            {product.amount} {product.volumeLabelShort} 
+                            {product.store && <span className="ml-2 px-2 py-0.5 rounded bg-gray-100 text-xs font-medium">{product.store.replace(/_/g, " ")}</span>}
+                        </p>
+                    </div>
+
+                    <div className="flex items-baseline gap-4 py-4 border-y">
+                        <span className="text-4xl font-bold text-primary">
+                            {formatPrice(finalPrice)}
+                        </span>
+                        {product.regularPrice && product.price !== product.regularPrice && (
+                            <div className="flex flex-col">
+                                <span className="text-lg text-muted-foreground line-through decoration-2 decoration-red-300">
+                                    {formatPrice(product.regularPrice / 100)}
+                                </span>
+                                <span className="text-xs text-red-500 font-medium">
+                                    Ušetříte {formatPrice((product.regularPrice - (product.price || 0)) / 100)}
+                                </span>
+                            </div>
+                        )}
+                        {product.pricePerUnit && (
+                            <span className="text-sm text-muted-foreground ml-auto">
+                                {formatPrice(product.pricePerUnit / 100)} / {product.baseUnitShort || "jed"}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <Button 
+                            size="lg" 
+                            className="w-full md:w-auto text-lg py-6 gap-3 shadow-lg shadow-primary/20"
+                            onClick={() => addItem(product)}
+                        >
+                            <ShoppingCart className="h-6 w-6" />
+                            Přidat do košíku
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center md:text-left">
+                            Dostupnost závisí na vybraném obchodu. Ceny se mohou lišit.
+                        </p>
+                    </div>
+
+                    {/* Additional Details */}
+                    <div className="pt-6 space-y-4">
+                        {(product.descriptionShort || product.descriptionLong) && (
+                            <div className="prose prose-sm max-w-none text-muted-foreground">
+                                <h3 className="text-foreground font-semibold text-lg mb-2">Popis produktu</h3>
+                                <p>{product.descriptionLong || product.descriptionShort}</p>
+                            </div>
+                        )}
+
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                                <span className="text-muted-foreground">Kód produktu</span>
+                                <span className="font-medium">{product.sku}</span>
+                            </div>
+                             <div className="flex justify-between py-1 border-b border-gray-200/50">
+                                <span className="text-muted-foreground">Balení</span>
+                                <span className="font-medium">{product.packageLabel || product.amount}</span>
+                            </div>
+                             <div className="flex justify-between py-1">
+                                <span className="text-muted-foreground">Značka</span>
+                                <span className="font-medium">{product.brand || "-"}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <Separator />
-
-            <div className="prose prose-sm max-w-none text-muted-foreground">
-                <p>{product.descriptionLong || product.descriptionShort || product.productMarketing}</p>
-            </div>
-
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="details">
-                <AccordionTrigger>Podrobné informace</AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Regulovaný název:</span>
-                    <span>{product.regulatedProductName || "-"}</span>
-                    
-                    <span className="text-muted-foreground">Značka:</span>
-                    <span>{product.brand || "-"}</span>
-                    
-                    <span className="text-muted-foreground">Hmotnost/Objem:</span>
-                    <span>{product.amount} {product.volumeLabelShort}</span>
-                    
-                    <span className="text-muted-foreground">Srovnávací jednotka:</span>
-                    <span>{product.baseUnitLong || product.baseUnitShort || "-"}</span>
-
-                    <span className="text-muted-foreground">SKU:</span>
-                    <span>{product.sku}</span>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="shipping">
-                <AccordionTrigger>Doprava a doručení</AccordionTrigger>
-                <AccordionContent>
-                  <p className="text-sm text-muted-foreground">
-                    Doručujeme každý den od 8:00 do 22:00. Při objednávce nad 1500 Kč je doprava zdarma.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
         </div>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-            <div className="mt-16">
-                <h2 className="text-2xl font-bold tracking-tight mb-6">Mohlo by se vám líbit</h2>
-                <ProductList products={relatedProducts} />
+        <footer className="border-t bg-white py-12 mt-12">
+            <div className="container px-4 text-center text-muted-foreground text-sm">
+                <p className="mb-4">&copy; 2024 GrocerApp. Premium Grocery Experience.</p>
+                <MadeWithDyad />
             </div>
-        )}
-      </main>
-
-      <footer className="border-t bg-white py-12 mt-12">
-        <div className="container px-4 text-center text-muted-foreground text-sm">
-             <p className="mb-4">&copy; 2024 GrocerApp. Premium Grocery Experience.</p>
-             <MadeWithDyad />
-        </div>
-      </footer>
+        </footer>
     </div>
   );
 };
-
-const ProductSkeleton = () => (
-    <div className="container px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <Skeleton className="aspect-square rounded-xl" />
-            <div className="space-y-6">
-                <Skeleton className="h-8 w-1/3" />
-                <Skeleton className="h-12 w-3/4" />
-                <Skeleton className="h-10 w-1/4" />
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-32 w-full" />
-            </div>
-        </div>
-    </div>
-);
 
 export default ProductDetail;
