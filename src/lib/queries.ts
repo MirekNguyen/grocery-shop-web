@@ -4,8 +4,15 @@ import {
   getCategories,
   getProductBySlug,
   getProductsByCategory,
+  getStores,
 } from "./api";
-import { StoreType } from "@/types";
+
+export const useStores = () => {
+  return useQuery({
+    queryKey: ["stores"],
+    queryFn: getStores,
+  });
+};
 
 export const useProducts = (params?: {
   category?: string;
@@ -13,7 +20,7 @@ export const useProducts = (params?: {
   page?: number;
   limit?: number;
   inPromotion?: boolean;
-  store?: StoreType;
+  store?: string | null;
 }) => {
   return useQuery({
     queryKey: ["products", params],
@@ -38,7 +45,7 @@ export const useProductBySlug = (slug: string) => {
 
 export const useProductsByCategory = (
   slug: string,
-  params?: { page?: number; limit?: number; store?: StoreType }
+  params?: { page?: number; limit?: number; store?: string | null }
 ) => {
   return useQuery({
     queryKey: ["products-by-category", slug, params],

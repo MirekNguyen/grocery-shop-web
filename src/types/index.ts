@@ -4,8 +4,9 @@ export interface Category {
   name: string;
   slug: string;
   orderHint: string;
-  createdAt: string | null;
-  updatedAt: string | null;
+  productCount?: number;
+  createdAt: string | Date | null;
+  updatedAt: string | Date | null;
 }
 
 export interface CategoryWithCount extends Category {
@@ -21,35 +22,54 @@ export interface Product {
   descriptionShort: string | null;
   descriptionLong: string | null;
   regulatedProductName: string | null;
+  
+  // Category info
   category: string;
   categorySlug: string;
+  
+  // Brand info
   brand: string | null;
   brandSlug: string | null;
+  
+  // Pricing
   price: number | null; // Cents
   pricePerUnit: number | null; // Cents
-  unitPrice: number | null; // Decimal
+  unitPrice: number | null; // Decimal (legacy/display)
   regularPrice: number | null; // Cents
   discountPrice: number | null; // Cents
   lowestPrice: number | null; // Cents
+  
+  // Status & Properties
   inPromotion: boolean;
+  published: boolean;
+  medical?: boolean;
+  weightArticle?: boolean;
+  
+  // Measurements
   amount: string;
-  weight: number | null;
+  weight?: number | null;
   packageLabel: string | null;
-  packageLabelKey: string | null;
-  volumeLabelKey: string | null;
+  packageLabelKey?: string | null;
+  volumeLabelKey?: string | null;
   volumeLabelShort: string | null;
+  baseUnitShort?: string | null; // Added for compatibility with existing components
+  baseUnitLong?: string | null;  // Added for compatibility with existing components
+  
+  // Content
   images: string[];
   productMarketing: string | null;
   brandMarketing: string | null;
-  published: boolean;
-  medical: boolean;
-  weightArticle: boolean;
-  scrapedAt: string | null;
-  updatedAt: string | null;
+  
+  // Metadata
+  scrapedAt: string | Date | null;
+  updatedAt: string | Date | null;
+  
+  // Store info (optional in product, usually comes from context or specific endpoints)
+  store?: string;
 }
 
 export interface ProductWithCategories extends Product {
-  categories: Category[];
+  categories?: Category[];
 }
 
 export interface Pagination {
@@ -64,8 +84,7 @@ export interface PaginatedProductResponse {
   pagination: Pagination;
 }
 
-export interface CategoryProductsResponse {
-  category: Category | null;
-  data: ProductWithCategories[];
-  pagination: Pagination;
+export interface StoreInfo {
+  store: string;
+  count: number;
 }

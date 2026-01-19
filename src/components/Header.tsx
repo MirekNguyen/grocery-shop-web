@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, Store, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, Store, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/lib/context/cart-context";
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/lib/context/store-context";
-import { StoreType } from "@/types";
+import { useStores } from "@/lib/queries";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -21,14 +21,14 @@ interface HeaderProps {
 export const Header = ({ onSearch }: HeaderProps) => {
   const { items } = useCart();
   const { selectedStore, setStore } = useStore();
+  const { data: stores, isLoading: storesLoading } = useStores();
+  
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
-  const getStoreLabel = (store: StoreType) => {
-    switch(store) {
-      case "BILLA": return "Billa";
-      case "FOODORA": return "Foodora Market";
-      default: return "Všechny obchody";
-    }
+  const getStoreLabel = (storeKey: string | null) => {
+    if (!storeKey) return "Všechny obchody";
+    const found = stores?.find(s => s.store === storeKey);
+    return found ? found.store.replace(/_/g, " ") : storeKey;
   };
 
   return (
@@ -44,33 +44,36 @@ export const Header = ({ onSearch }: HeaderProps) => {
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="min-w-[160px] justify-between hidden md:flex">
                     <span className="flex items-center gap-2">
-                        <Store className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{getStoreLabel(selectedStore)}</span>
+                        {storesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4 text-muted-foreground" />}
+                        <span className="truncate max-w-[150px]">{getStoreLabel(selectedStore)}</span>
                     </span>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[200px]">
+            <DropdownMenuContent align="start" className="w-[240px]">
                 <DropdownMenuLabel>Vyberte obchod</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                     onClick={() => setStore(null)}
                     className={!selectedStore ? "bg-accent" : ""}
                 >
-                    Všechny obchody
+                    <div className="flex justify-between w-full">
+                        <span>Všechny obchody</span>
+                    </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                    onClick={() => setStore("BILLA")}
-                    className={selectedStore === "BILLA" ? "bg-accent" : ""}
-                >
-                    Billa
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                    onClick={() => setStore("FOODORA")}
-                    className={selectedStore === "FOODORA" ? "bg-accent" : ""}
-                >
-                    Foodora Market
-                </DropdownMenuItem>
+                
+                {stores?.map((storeInfo) => (
+                    <DropdownMenuItem 
+                        key={storeInfo.store}
+                        onClick={() => setStore(storeInfo.store)}
+                        className={selectedStore === storeInfo.store ? "bg-accent" : ""}
+                    >
+                         <div className="flex justify-between w-full items-center">
+                            <span>{storeInfo.store.replace(/_/g, " ")}</span>
+                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{storeInfo.count}</span>
+                        </div>
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
         </DropdownMenu>
 
@@ -86,7 +89,7 @@ export const Header = ({ onSearch }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-           {/* Mobile Store Selector Trigger (Simplified) */}
+           {/* Mobile Store Selector Trigger */}
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -95,8 +98,11 @@ export const Header = ({ onSearch }: HeaderProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setStore(null)}>Všechny</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStore("BILLA")}>Billa</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStore("FOODORA")}>Foodora</DropdownMenuItem>
+                {stores?.map((storeInfo) => (
+                    <DropdownMenuItem key={storeInfo.store} onClick={() => setStore(storeInfo.store)}>
+                        {storeInfo.store}
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
            </DropdownMenu>
 

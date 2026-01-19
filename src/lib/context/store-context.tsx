@@ -1,21 +1,20 @@
 import React, { createContext, useContext, useState } from "react";
-import { StoreType } from "@/types";
 
 interface StoreContextType {
-  selectedStore: StoreType;
-  setStore: (store: StoreType) => void;
+  selectedStore: string | null;
+  setStore: (store: string | null) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
-  const [selectedStore, setSelectedStore] = useState<StoreType>(() => {
+  const [selectedStore, setSelectedStore] = useState<string | null>(() => {
     // Try to recover from localStorage on init
     const saved = localStorage.getItem("selectedStore");
-    return (saved as StoreType) || null;
+    return saved || null;
   });
 
-  const setStore = (store: StoreType) => {
+  const setStore = (store: string | null) => {
     setSelectedStore(store);
     if (store) {
       localStorage.setItem("selectedStore", store);
