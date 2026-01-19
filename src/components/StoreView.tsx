@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { CategoryWithCount } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StoreViewProps {
   searchQuery: string;
@@ -21,6 +28,9 @@ export const StoreView = ({ searchQuery }: StoreViewProps) => {
   // Pagination State
   const [page, setPage] = useState(1);
   const limit = 24;
+  
+  // Sort State
+  const [sortOption, setSortOption] = useState("recommended");
 
   // Reset page when filters change (category, search, or store)
   useEffect(() => {
@@ -67,7 +77,33 @@ export const StoreView = ({ searchQuery }: StoreViewProps) => {
     return findCategory(Object.values(categoriesData).flat());
   }, [categoriesData, categorySlug]);
 
-  const products = productsData?.data || [];
+  // Client-side sorting
+  const products = useMemo(() => {
+    if (!productsData?.data) return [];
+    
+    // Create a copy to sort
+    const items = [...productsData.data];
+
+    switch (sortOption) {
+        case "price-asc":
+            return items.sort((a, b) => {
+                const priceA = a.price ?? a.regularPrice ?? 0;
+                const priceB = b.price ?? b.regularPrice ?? 0;
+                return priceA - priceB;
+            });
+        case "price-desc":
+            return items.sort((a, b) => {
+                const priceA = a.price ?? a.regularPrice ?? 0;
+                const priceB = b.price ?? b.regularPrice ?? 0;
+                return priceB - priceA;
+            });
+        case "name-asc":
+            return items.sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+        default:
+            return items;
+    }
+  }, [productsData?.data, sortOption]);
+
   const pagination = productsData?.pagination;
   const totalProducts = pagination?.total || 0;
 
@@ -98,10 +134,18 @@ export const StoreView = ({ searchQuery }: StoreViewProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden md:flex">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Seřadit
-            </Button>
+            <Select value={sortOption} onValueChange={setSortOption}>
+                <SelectTrigger className="w-[180px]">
+                    <SlidersHorizontal className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Seřadit" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="recommended">Doporučené</SelectItem>
+                    <SelectItem value="price-asc">Od nejlevnějšího</SelectItem>
+                    <SelectItem value="price-desc">Od nejdražšího</SelectItem>
+                    <SelectItem value="name-asc">Abecedně A-Z</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
       </div>
 
