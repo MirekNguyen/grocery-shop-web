@@ -1,41 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCategories, getProducts, getProductBySlug, getStores } from "./api";
+import { PaginatedProductResponse, CategoryWithCount, Store, ProductWithCategories } from "@/types";
 
-export const useStores = () => {
-  return useQuery({
-    queryKey: ["stores"],
-    queryFn: getStores,
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return res.json();
 };
 
-export const useCategories = (store?: string | null) => {
-  return useQuery({
-    queryKey: ["categories", store],
-    queryFn: () => getCategories(store),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
-
-export const useProducts = (params?: {
-  category?: string;
+interface UseProductsOptions {
+  store?: string | null;
+  category?: string | null;
   search?: string;
   page?: number;
   limit?: number;
-  inPromotion?: boolean;
-  store?: string | null;
-}) => {
-  return useQuery({
-    queryKey: ["products", params],
-    queryFn: () => getProducts(params),
-    placeholderData: (previousData) => previousData,
+}
+
+export const useProducts = (options: UseProductsOptions = {}) => {
+  const { store, category, search, page = 1, limit = 24 } = options;
+  
+  return useQuery<PaginatedProductResponse>({
+    queryKey: ["products", store, category, search, page, limit],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (store) params.append("store", store);
+      if (category) params.append("category", category);
+      if (search) params.append("q", search);
+      if (page) params.append("page", page.toString());
+      if (limit) params.append("limit", limit.toString());
+      
+      return fetcher(`/api/products?${params.toString()}`);
+    },
   });
 };
 
-export const useProduct = (slug?: string) => {
-  return useQuery({
+export const useCategories = (storeId?: string | null) => {
+  return useQuery<Record<string, CategoryWithCount[]>>({
+    queryKey: ["categories", storeId],
+    queryFn: () => {
+      const url = storeId ? `/api/categories?store=${storeId}` : "/api/categories";
+      return fetcher(url);
+    },
+  });
+};
+
+export const useProduct = (slug: string | undefined) => {
+  return useQuery<ProductWithCategories>({
     queryKey: ["product", slug],
-    queryFn: () => getProductBySlug(slug!),
+    queryFn: () => fetcher(`/api/products/slug/${slug}`),
     enabled: !!slug,
+  });
+};
+
+export const useStores = () => {
+  return useQuery<Store[]>({
+    queryKey: ["stores"],
+    queryFn: () => fetcher("/api/stores"),
   });
 };
