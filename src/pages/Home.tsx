@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { CategoryNav } from "@/components/CategoryNav";
 import { ProductList } from "@/components/ProductList";
@@ -10,10 +10,9 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { CategoryWithCount } from "@/types";
 
 const Index = () => {
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchParams] = useSearchParams();
   const categorySlug = searchParams.get("category") || undefined;
-  // Use URL param for search instead of local state
-  const searchQuery = searchParams.get("q") || "";
   const { selectedStore } = useStore();
 
   const { data: productsData, isLoading: productsLoading } = useProducts({
@@ -44,7 +43,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header onSearch={setSearchQuery} />
       
       <main className="flex-1 container py-6 space-y-8">
         <section className="space-y-4">

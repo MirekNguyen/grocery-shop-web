@@ -2,11 +2,11 @@ import { useStore } from "@/lib/context/store-context";
 import { CategorySidebar } from "@/components/CategorySidebar";
 import { StoreView } from "@/components/StoreView";
 
-// interface MainLayoutProps {
-//   searchQuery: string;
-// }
+interface MainLayoutProps {
+  searchQuery: string;
+}
 
-export const MainLayout = () => { // Removed prop
+export const MainLayout = ({ searchQuery }: MainLayoutProps) => {
   const { selectedStore } = useStore();
 
   return (
@@ -19,7 +19,7 @@ export const MainLayout = () => { // Removed prop
       )}
       
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
-        <StoreView />
+        <StoreView searchQuery={searchQuery} />
       </main>
     </div>
   );

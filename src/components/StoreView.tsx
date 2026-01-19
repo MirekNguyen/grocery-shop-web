@@ -8,16 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { CategoryWithCount } from "@/types";
 
-// interface StoreViewProps {
-//   searchQuery: string;
-// }
+interface StoreViewProps {
+  searchQuery: string;
+}
 
-export const StoreView = () => { // Removed prop
+export const StoreView = ({ searchQuery }: StoreViewProps) => {
   const [searchParams] = useSearchParams();
   const categorySlug = searchParams.get("category") || undefined;
-  // Get search query from URL
-  const searchQuery = searchParams.get("q") || ""; 
-  
   const { selectedStore } = useStore();
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +41,7 @@ export const StoreView = () => { // Removed prop
     isError 
   } = useProducts({
     category: categorySlug,
-    search: searchQuery || undefined,
+    search: searchQuery,
     page,
     limit,
     store: selectedStore,
