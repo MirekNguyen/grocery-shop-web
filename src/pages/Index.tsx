@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCategories, useProducts } from "@/lib/queries";
 import { ProductList } from "@/components/ProductList";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,13 @@ import { useDebounce } from "@/lib/hooks/use-debounce";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/context/cart-context";
+import { CategoryWithCount } from "@/types";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
   const { itemCount, setIsOpen } = useCart();
   
-  // URL state management could be added here (useSearchParams), but keeping it local for now
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const limit = 24;
@@ -27,8 +27,23 @@ const Index = () => {
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useCategories();
   
-  // Flatten categories for display/finding
-  const categoriesList = categoriesData ? Object.values(categoriesData).flat() : [];
+  // Helper to flatten categories for the horizontal list
+  const categoriesList = useMemo(() => {
+    if (!categoriesData) return [];
+    
+    const flatten = (cats: CategoryWithCount[]): CategoryWithCount[] => {
+        return cats.reduce((acc, cat) => {
+            acc.push(cat);
+            if (cat.subcategories && cat.subcategories.length > 0) {
+                acc.push(...flatten(cat.subcategories));
+            }
+            return acc;
+        }, [] as CategoryWithCount[]);
+    };
+
+    const rootCategories = Object.values(categoriesData).flat();
+    return flatten(rootCategories);
+  }, [categoriesData]);
 
   const { 
     data: productsData, 

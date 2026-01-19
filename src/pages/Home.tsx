@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { CategoryNav } from "@/components/CategoryNav";
 import { ProductList } from "@/components/ProductList";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 import { useStore } from "@/lib/context/store-context";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import { CategoryWithCount } from "@/types";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,8 +23,23 @@ const Index = () => {
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  // Handle the object structure from API (grouped by store)
-  const activeCategories = categories ? Object.values(categories).flat() : [];
+  // Handle the object structure from API and hierarchy
+  const activeCategories = useMemo(() => {
+    if (!categories) return [];
+
+    const flatten = (cats: CategoryWithCount[]): CategoryWithCount[] => {
+        return cats.reduce((acc, cat) => {
+            acc.push(cat);
+            if (cat.subcategories && cat.subcategories.length > 0) {
+                acc.push(...flatten(cat.subcategories));
+            }
+            return acc;
+        }, [] as CategoryWithCount[]);
+    };
+
+    const rootCategories = Object.values(categories).flat();
+    return flatten(rootCategories);
+  }, [categories]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

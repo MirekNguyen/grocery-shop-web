@@ -8,10 +8,12 @@ export interface Category {
   createdAt: string | Date | null;
   updatedAt: string | Date | null;
   store?: string;
+  parentId?: number | null;
 }
 
 export interface CategoryWithCount extends Category {
   productCount: number;
+  subcategories?: CategoryWithCount[];
 }
 
 export type CategoriesResponse = Record<string, CategoryWithCount[]>;
