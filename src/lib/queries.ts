@@ -4,6 +4,7 @@ import {
   getCategories,
   getProductBySlug,
   getProductsByCategory,
+  getStores,
 } from "./api";
 import { StoreType } from "@/types";
 
@@ -25,6 +26,13 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
+  });
+};
+
+export const useStores = () => {
+  return useQuery({
+    queryKey: ["stores"],
+    queryFn: getStores,
   });
 };
 
