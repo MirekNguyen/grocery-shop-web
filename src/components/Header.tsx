@@ -1,137 +1,84 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, Store, ChevronDown, Loader2 } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/context/cart-context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { useStore } from "@/lib/context/store-context";
-import { useStores } from "@/lib/queries";
+import { useDebounce } from "@/lib/hooks/use-debounce";
+import { MobileNav } from "@/components/MobileNav";
 
 interface HeaderProps {
-  onSearch?: (query: string) => void;
+  onSearch: (query: string) => void;
 }
 
 export const Header = ({ onSearch }: HeaderProps) => {
-  const { items, setIsOpen } = useCart();
-  const { selectedStore, setStore } = useStore();
-  const { data: stores, isLoading: storesLoading } = useStores();
+  const [localSearch, setLocalSearch] = useState("");
+  const { itemCount, setIsOpen } = useCart();
   
-  const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  // Debounce search input to avoid too many re-renders/fetches
+  const debouncedSearch = useDebounce(localSearch, 500);
 
-  const getStoreLabel = (storeKey: string | null) => {
-    if (!storeKey) return "Všechny obchody";
-    const found = stores?.find(s => s.store === storeKey);
-    return found ? found.store.replace(/_/g, " ") : storeKey;
-  };
+  useEffect(() => {
+    onSearch(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container h-16 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-          <Store className="h-6 w-6" />
-          <span>GrocerApp</span>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center gap-4 px-4 md:px-6">
+        
+        {/* Mobile Menu Trigger */}
+        <MobileNav />
+
+        <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary cursor-pointer mr-auto md:mr-0">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+                G
+            </div>
+            <span className="hidden sm:inline">Grocer<span className="text-primary/70">App</span></span>
         </Link>
 
-        {/* Store Selector */}
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="min-w-[160px] justify-between hidden md:flex">
-                    <span className="flex items-center gap-2">
-                        {storesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4 text-muted-foreground" />}
-                        <span className="truncate max-w-[150px]">{getStoreLabel(selectedStore)}</span>
-                    </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[240px]">
-                <DropdownMenuLabel>Vyberte obchod</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                    onClick={() => setStore(null)}
-                    className={!selectedStore ? "bg-accent" : ""}
-                >
-                    <div className="flex justify-between w-full">
-                        <span>Všechny obchody</span>
-                    </div>
-                </DropdownMenuItem>
-                
-                {stores?.map((storeInfo) => (
-                    <DropdownMenuItem 
-                        key={storeInfo.store}
-                        onClick={() => setStore(storeInfo.store)}
-                        className={selectedStore === storeInfo.store ? "bg-accent" : ""}
-                    >
-                         <div className="flex justify-between w-full items-center">
-                            <span>{storeInfo.store.replace(/_/g, " ")}</span>
-                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{storeInfo.count}</span>
-                        </div>
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="flex-1 max-w-xl mx-4 hidden md:block">
-          <div className="relative">
+        <div className="hidden md:flex flex-1 max-w-md relative mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Hledat produkty..." 
-              className="pl-9 bg-gray-50 focus-visible:bg-white transition-colors"
-              onChange={(e) => onSearch?.(e.target.value)}
+                placeholder="Hledat produkty..." 
+                className="pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
             />
-          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-           {/* Mobile Store Selector Trigger */}
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Store className="h-5 w-5" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setStore(null)}>Všechny</DropdownMenuItem>
-                {stores?.map((storeInfo) => (
-                    <DropdownMenuItem key={storeInfo.store} onClick={() => setStore(storeInfo.store)}>
-                        {storeInfo.store}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-           </DropdownMenu>
-
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative"
-            onClick={() => setIsOpen(true)}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
-                {itemCount}
-              </span>
-            )}
-          </Button>
-        </div>
+         <div className="flex items-center gap-2">
+             <Button variant="ghost" size="icon" className="md:hidden">
+                 <Search className="h-5 w-5" />
+             </Button>
+             <div className="h-8 w-px bg-border mx-2 hidden md:block" />
+             <Button 
+                size="sm" 
+                className="relative"
+                onClick={() => setIsOpen(true)}
+             >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Košík</span>
+                {itemCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 bg-white/20 text-white hover:bg-white/30 border-none">
+                        {itemCount}
+                    </Badge>
+                )}
+             </Button>
+         </div>
       </div>
       
-      {/* Mobile Search Bar */}
-      <div className="md:hidden container py-2 pb-3">
+      {/* Mobile Search Bar (Below header on small screens) */}
+      <div className="md:hidden border-t p-2 bg-background">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Hledat produkty..." 
-              className="pl-9 bg-gray-50"
-              onChange={(e) => onSearch?.(e.target.value)}
+                placeholder="Hledat produkty..." 
+                className="pl-9"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
             />
-          </div>
+        </div>
       </div>
     </header>
   );

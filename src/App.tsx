@@ -21,16 +21,20 @@ function App() {
       <StoreProvider>
         <CartProvider>
           <BrowserRouter>
-            <div className="min-h-screen bg-background font-sans antialiased">
+            <div className="min-h-screen bg-background font-sans antialiased flex flex-col">
               <Header onSearch={setSearchQuery} />
               
               <Routes>
                 <Route 
                   path="/" 
                   element={
-                    <div className="flex">
-                      <CategorySidebar />
-                      <main className="flex-1 overflow-x-hidden">
+                    <div className="flex flex-1 overflow-hidden">
+                      {/* Desktop Sidebar: Visible only on large screens */}
+                      <aside className="hidden lg:block w-64 border-r bg-background/50 overflow-y-auto">
+                        <CategorySidebar />
+                      </aside>
+                      
+                      <main className="flex-1 overflow-y-auto overflow-x-hidden">
                         <StoreView searchQuery={searchQuery} />
                       </main>
                     </div>

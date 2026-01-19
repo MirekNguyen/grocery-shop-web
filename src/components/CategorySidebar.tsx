@@ -13,9 +13,10 @@ interface CategoryItemProps {
   category: CategoryWithCount;
   isActive: (slug: string) => boolean;
   level?: number;
+  onSelect?: () => void;
 }
 
-const CategoryItem = ({ category, isActive, level = 0 }: CategoryItemProps) => {
+const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
@@ -36,21 +37,30 @@ const CategoryItem = ({ category, isActive, level = 0 }: CategoryItemProps) => {
 
   return (
     <div className="w-full">
-      <div className={cn("flex items-center w-full group", level > 0 && "ml-3 border-l pl-2")}>
+      <div 
+        className={cn(
+            "flex items-center w-full group relative rounded-md transition-colors",
+            active ? "bg-accent/50" : "hover:bg-accent/20"
+        )}
+      >
+        {/* Indentation Line for nested items */}
+        {level > 0 && (
+            <div className="absolute left-[-12px] top-0 bottom-0 w-[1px] bg-border/50" />
+        )}
+
         <Link 
             to={`/?category=${category.slug}`}
+            onClick={onSelect}
             className={cn(
-                buttonVariants({ variant: active ? "secondary" : "ghost" }),
-                "flex-1 justify-start font-normal h-auto py-2 px-3",
-                active && "bg-muted font-medium",
-                level > 0 && "text-sm"
+                "flex-1 flex items-center min-w-0 py-2 pl-2 pr-1 text-sm select-none",
+                active ? "font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             title={category.name}
         >
-            <span className="truncate text-left flex-1 break-words whitespace-normal leading-tight">
+            <span className="truncate flex-1">
                 {category.name}
             </span>
-            <span className="ml-2 text-xs text-muted-foreground shrink-0 tabular-nums">
+            <span className="ml-2 text-[10px] text-muted-foreground/60 tabular-nums bg-muted/50 px-1.5 py-0.5 rounded-full">
                 {category.productCount}
             </span>
         </Link>
@@ -59,26 +69,33 @@ const CategoryItem = ({ category, isActive, level = 0 }: CategoryItemProps) => {
              <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 ml-1 hover:bg-muted"
+                className="h-8 w-8 shrink-0 mr-1 hover:bg-background/80"
                 onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setIsExpanded(!isExpanded);
                 }}
              >
-                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                 {isExpanded ? 
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50" /> : 
+                    <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+                 }
              </Button>
         )}
       </div>
 
       {hasSubcategories && isExpanded && (
-        <div className="mt-1 space-y-1">
+        <div className={cn(
+            "mt-1 space-y-0.5",
+            level === 0 ? "pl-2" : "pl-3 border-l ml-2" // Better visual hierarchy
+        )}>
           {category.subcategories!.map((sub) => (
             <CategoryItem 
                 key={`${sub.store}-${sub.id}`} 
                 category={sub} 
                 isActive={isActive} 
                 level={level + 1} 
+                onSelect={onSelect}
             />
           ))}
         </div>
@@ -87,7 +104,12 @@ const CategoryItem = ({ category, isActive, level = 0 }: CategoryItemProps) => {
   );
 };
 
-export const CategorySidebar = () => {
+interface CategorySidebarProps {
+  className?: string;
+  onSelect?: () => void;
+}
+
+export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) => {
   const { selectedStore } = useStore();
   const { data: categoriesData, isLoading } = useCategories(selectedStore);
   const [searchParams] = useSearchParams();
@@ -109,13 +131,13 @@ export const CategorySidebar = () => {
 
   if (isLoading) {
     return (
-      <div className="pb-12 w-64 hidden lg:block border-r min-h-[calc(100vh-4rem)] bg-background">
+      <div className={cn("bg-background", className)}>
         <div className="space-y-4 py-4">
             <div className="px-3 py-2">
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Kategorie</h2>
-            <div className="space-y-1 px-2">
+            <div className="space-y-2 px-2">
                 {Array.from({ length: 15 }).map((_, i) => (
-                    <Skeleton key={i} className="h-9 w-full" />
+                    <Skeleton key={i} className="h-8 w-full rounded-md" />
                 ))}
             </div>
             </div>
@@ -125,32 +147,28 @@ export const CategorySidebar = () => {
   }
 
   return (
-    <div className="pb-12 w-64 hidden lg:block border-r min-h-[calc(100vh-4rem)] bg-background">
-      <div className="space-y-4 py-4">
+    <div className={cn("bg-background flex flex-col h-full", className)}>
+      <div className="space-y-4 py-4 flex-1">
         <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          <h2 className="mb-4 px-2 text-lg font-semibold tracking-tight flex items-center justify-between">
             Kategorie
-            {selectedStore && (
-                <span className="text-xs font-normal text-muted-foreground ml-2">
-                    ({categories.length})
-                </span>
-            )}
           </h2>
           <ScrollArea className="h-[calc(100vh-10rem)] px-1">
-            <div className="space-y-1 p-2">
+            <div className="space-y-1 pb-10">
                <Link 
                 to="/"
+                onClick={onSelect}
                 className={cn(
                     buttonVariants({ variant: !activeCategorySlug ? "secondary" : "ghost" }),
-                    "w-full justify-start font-normal mb-2"
+                    "w-full justify-start font-medium mb-4"
                 )}
                >
                     Všechny produkty
                 </Link>
               
               {categories.length === 0 && selectedStore && (
-                  <div className="px-4 py-4 text-sm text-muted-foreground text-center">
-                      Žádné kategorie pro tento obchod.
+                  <div className="px-4 py-4 text-sm text-muted-foreground text-center border border-dashed rounded-lg">
+                      Žádné kategorie
                   </div>
               )}
 
@@ -159,6 +177,7 @@ export const CategorySidebar = () => {
                     key={`${category.store}-${category.id}`} 
                     category={category} 
                     isActive={isActive} 
+                    onSelect={onSelect}
                 />
               ))}
             </div>
