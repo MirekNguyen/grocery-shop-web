@@ -39,7 +39,7 @@ export interface Product {
   sku: string;
   
   // Store
-  store?: string;
+  store?: "BILLA" | "FOODORA";
 }
 
 export interface Category {
@@ -50,11 +50,6 @@ export interface Category {
 }
 
 export interface CategoryWithCount extends Category {}
-
-export interface StoreInfo {
-  store: string;
-  count: number;
-}
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -70,4 +65,4 @@ export type ProductWithCategories = Product;
 
 export type PaginatedProductResponse = PaginatedResponse<ProductWithCategories>;
 
-export type StoreType = string | null;
+export type StoreType = "BILLA" | "FOODORA" | null;

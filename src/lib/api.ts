@@ -4,7 +4,6 @@ import {
   PaginatedProductResponse,
   ProductWithCategories,
   StoreType,
-  StoreInfo,
 } from "@/types";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
@@ -30,11 +29,6 @@ export const getProducts = async (params?: {
 
 export const getCategories = async (): Promise<CategoryWithCount[]> => {
   const { data } = await api.get("/api/categories");
-  return data;
-};
-
-export const getStores = async (): Promise<StoreInfo[]> => {
-  const { data } = await api.get("/api/stores");
   return data;
 };
 

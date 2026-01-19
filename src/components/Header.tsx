@@ -12,8 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/lib/context/store-context";
-import { useStores } from "@/lib/queries";
-import { Badge } from "@/components/ui/badge";
+import { StoreType } from "@/types";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -22,16 +21,14 @@ interface HeaderProps {
 export const Header = ({ onSearch }: HeaderProps) => {
   const { items } = useCart();
   const { selectedStore, setStore } = useStore();
-  const { data: stores } = useStores();
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
-  const formatStoreName = (store: string) => {
-    return store.replace(/_/g, " ").replace("FOODORA", "Foodora").replace("BILLA", "Billa");
-  };
-
-  const getStoreLabel = (store: string | null) => {
-    if (!store) return "Všechny obchody";
-    return formatStoreName(store);
+  const getStoreLabel = (store: StoreType) => {
+    switch(store) {
+      case "BILLA": return "Billa";
+      case "FOODORA": return "Foodora Market";
+      default: return "Všechny obchody";
+    }
   };
 
   return (
@@ -48,12 +45,12 @@ export const Header = ({ onSearch }: HeaderProps) => {
                 <Button variant="outline" className="min-w-[160px] justify-between hidden md:flex">
                     <span className="flex items-center gap-2">
                         <Store className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate max-w-[200px]">{getStoreLabel(selectedStore)}</span>
+                        <span className="truncate">{getStoreLabel(selectedStore)}</span>
                     </span>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[240px]">
+            <DropdownMenuContent align="start" className="w-[200px]">
                 <DropdownMenuLabel>Vyberte obchod</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
@@ -62,17 +59,18 @@ export const Header = ({ onSearch }: HeaderProps) => {
                 >
                     Všechny obchody
                 </DropdownMenuItem>
-                
-                {stores?.map((storeInfo) => (
-                    <DropdownMenuItem 
-                        key={storeInfo.store}
-                        onClick={() => setStore(storeInfo.store)}
-                        className={selectedStore === storeInfo.store ? "bg-accent justify-between" : "justify-between"}
-                    >
-                        <span>{formatStoreName(storeInfo.store)}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 h-5">{storeInfo.count}</Badge>
-                    </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem 
+                    onClick={() => setStore("BILLA")}
+                    className={selectedStore === "BILLA" ? "bg-accent" : ""}
+                >
+                    Billa
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                    onClick={() => setStore("FOODORA")}
+                    className={selectedStore === "FOODORA" ? "bg-accent" : ""}
+                >
+                    Foodora Market
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
 
@@ -88,23 +86,17 @@ export const Header = ({ onSearch }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-           {/* Mobile Store Selector Trigger */}
+           {/* Mobile Store Selector Trigger (Simplified) */}
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
                     <Store className="h-5 w-5" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setStore(null)}>Všechny</DropdownMenuItem>
-                {stores?.map((storeInfo) => (
-                    <DropdownMenuItem 
-                        key={storeInfo.store}
-                        onClick={() => setStore(storeInfo.store)}
-                    >
-                        {formatStoreName(storeInfo.store)}
-                    </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem onClick={() => setStore("BILLA")}>Billa</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStore("FOODORA")}>Foodora</DropdownMenuItem>
             </DropdownMenuContent>
            </DropdownMenu>
 
