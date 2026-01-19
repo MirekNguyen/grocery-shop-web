@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,23 @@ export const Header = ({ onSearch }: HeaderProps) => {
   const { itemCount, setIsOpen } = useCart();
   const searchInputRef = useRef<HTMLInputElement>(null);
   
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   // Debounce search input to avoid too many re-renders/fetches
   const debouncedSearch = useDebounce(localSearch, 500);
 
   useEffect(() => {
     onSearch(debouncedSearch);
-  }, [debouncedSearch, onSearch]);
+    
+    // If user types in search and is not on home page, redirect to home to show results
+    // We explicitly check if debouncedSearch has value to avoid redirecting on clear if desired,
+    // though usually typing anything should show results.
+    if (debouncedSearch && location.pathname !== "/") {
+        navigate("/");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, onSearch, navigate]); // Intentionally excluding location.pathname to avoid redirect loop on navigation
 
   // Handle "/" shortcut to focus search
   useEffect(() => {
