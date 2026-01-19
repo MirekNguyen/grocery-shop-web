@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, CornerDownRight } from "lucide-react";
 
 interface CategoryItemProps {
   category: CategoryWithCount;
@@ -20,22 +20,19 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   const [isExpanded, setIsExpanded] = useState(false);
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
-  
+  const isChild = level > 0;
+
   // Calculate if we should auto-expand based on active state
   const shouldAutoExpand = useMemo(() => {
     if (active && hasSubcategories) return true;
     if (!hasSubcategories) return false;
     
-    // Check if any child is active
     const findActive = (cats: CategoryWithCount[]): boolean => {
         return cats.some(c => isActive(c.slug) || (c.subcategories && findActive(c.subcategories)));
     };
     return findActive(category.subcategories!);
   }, [category, hasSubcategories, isActive, active]);
 
-  // Sync expansion state with active children/self only when the "need" to expand changes
-  // This prevents the effect from fighting the user if they manually collapse it while active,
-  // because the effect only runs when 'shouldAutoExpand' flips from false to true.
   useEffect(() => {
       if (shouldAutoExpand) {
           setIsExpanded(true);
@@ -50,8 +47,6 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
 
   const handleLinkClick = (e: React.MouseEvent) => {
       if (onSelect) onSelect();
-      
-      // If we are already active and have subcategories, treat the click as a toggle
       if (active && hasSubcategories) {
           e.preventDefault(); 
           setIsExpanded(prev => !prev);
@@ -59,31 +54,54 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <div 
         className={cn(
-            "flex items-center w-full group relative rounded-md transition-colors",
-            active ? "bg-accent/50" : "hover:bg-accent/20"
+            "flex items-center w-full group relative rounded-md transition-all duration-200 border",
+            // Active State
+            active 
+                ? "bg-primary/10 border-primary/20 text-primary z-10" 
+                : "border-transparent hover:bg-accent hover:text-accent-foreground",
+            // Level spacing
+            isChild ? "mt-1" : "mb-1"
         )}
       >
-        {/* Indentation Line for nested items */}
-        {level > 0 && (
-            <div className="absolute left-[-12px] top-0 bottom-0 w-[1px] bg-border/50" />
-        )}
-
         <Link 
             to={`/?category=${category.slug}`}
             onClick={handleLinkClick}
             className={cn(
-                "flex-1 flex items-center min-w-0 py-2 pl-2 pr-1 text-sm select-none cursor-pointer",
-                active ? "font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                "flex-1 flex items-center min-w-0 py-2.5 pr-2 select-none cursor-pointer",
+                // Indentation based on level
+                level === 0 ? "pl-3" : "pl-3"
             )}
             title={category.name}
         >
-            <span className="truncate flex-1">
+            {/* Icon indicating depth/type */}
+            {level > 0 ? (
+                <CornerDownRight className={cn(
+                    "w-3.5 h-3.5 mr-2 shrink-0 opacity-50",
+                    active ? "text-primary" : "text-muted-foreground"
+                )} />
+            ) : (
+                // Optional: Folder icon for top level, or just rely on font weight
+                 null 
+            )}
+
+            <span className={cn(
+                "truncate flex-1",
+                // Visual hierarchy: Top level is bolder and slightly larger
+                level === 0 ? "font-semibold text-sm" : "font-normal text-sm"
+            )}>
                 {category.name}
             </span>
-            <span className="ml-2 text-[10px] text-muted-foreground/60 tabular-nums bg-muted/50 px-1.5 py-0.5 rounded-full shrink-0">
+            
+            {/* Product Count - Enhanced Visibility */}
+            <span className={cn(
+                "ml-2 text-xs tabular-nums px-2 py-0.5 rounded-full shrink-0 font-medium",
+                active 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted text-muted-foreground group-hover:bg-background/80"
+            )}>
                 {category.productCount}
             </span>
         </Link>
@@ -92,31 +110,42 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
              <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 mr-1 hover:bg-background/80 active:translate-y-0.5 transition-transform"
+                className={cn(
+                    "h-9 w-9 shrink-0 mr-0.5 hover:bg-transparent",
+                    active ? "text-primary" : "text-muted-foreground"
+                )}
                 onClick={handleToggle}
              >
                  {isExpanded ? 
-                    <ChevronDown className="h-3.5 w-3.5 opacity-50" /> : 
-                    <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+                    <ChevronDown className="h-4 w-4" /> : 
+                    <ChevronRight className="h-4 w-4" />
                  }
              </Button>
         )}
       </div>
 
       {hasSubcategories && isExpanded && (
-        <div className={cn(
-            "mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200",
-            level === 0 ? "pl-2" : "pl-3 border-l ml-2" 
-        )}>
-          {category.subcategories!.map((sub) => (
-            <CategoryItem 
-                key={`${sub.store}-${sub.id}`} 
-                category={sub} 
-                isActive={isActive} 
-                level={level + 1} 
-                onSelect={onSelect}
-            />
-          ))}
+        <div className="relative">
+            {/* Tree Line */}
+            <div className={cn(
+                "absolute left-[1.1rem] top-0 bottom-2 w-px bg-border",
+                level > 0 && "left-[1.8rem]" // Shift line for deeper levels
+            )} />
+            
+            <div className={cn(
+                "animate-in slide-in-from-top-1 duration-200",
+                "pl-6" // Indent container for children
+            )}>
+                {category.subcategories!.map((sub) => (
+                    <CategoryItem 
+                        key={`${sub.store}-${sub.id}`} 
+                        category={sub} 
+                        isActive={isActive} 
+                        level={level + 1} 
+                        onSelect={onSelect}
+                    />
+                ))}
+            </div>
         </div>
       )}
     </div>
@@ -146,7 +175,6 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [categoriesData, selectedStore]);
 
-  // Memoize the isActive function to prevent unnecessary re-renders in children
   const isActive = useCallback((slug: string) => {
       return activeCategorySlug === slug;
   }, [activeCategorySlug]);
@@ -159,7 +187,7 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Kategorie</h2>
             <div className="space-y-2 px-2">
                 {Array.from({ length: 15 }).map((_, i) => (
-                    <Skeleton key={i} className="h-8 w-full rounded-md" />
+                    <Skeleton key={i} className="h-10 w-full rounded-md" />
                 ))}
             </div>
             </div>
@@ -169,27 +197,29 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
   }
 
   return (
-    <div className={cn("bg-background flex flex-col h-full", className)}>
+    <div className={cn("bg-background flex flex-col h-full border-r", className)}>
       <div className="space-y-4 py-4 flex-1">
         <div className="px-3 py-2">
-          <h2 className="mb-4 px-2 text-lg font-semibold tracking-tight flex items-center justify-between">
-            Kategorie
+          <h2 className="mb-4 px-2 text-lg font-bold tracking-tight flex items-center gap-2">
+             <Folder className="w-5 h-5" />
+             Kategorie
           </h2>
           <ScrollArea className="h-[calc(100vh-10rem)] px-1">
-            <div className="space-y-1 pb-10">
+            <div className="space-y-1 pb-10 pr-3">
                <Link 
                 to="/"
                 onClick={onSelect}
                 className={cn(
                     buttonVariants({ variant: !activeCategorySlug ? "secondary" : "ghost" }),
-                    "w-full justify-start font-medium mb-4"
+                    "w-full justify-start font-bold mb-6 h-10 border border-transparent",
+                    !activeCategorySlug && "border-border shadow-sm"
                 )}
                >
                     Všechny produkty
                 </Link>
               
               {categories.length === 0 && selectedStore && (
-                  <div className="px-4 py-4 text-sm text-muted-foreground text-center border border-dashed rounded-lg">
+                  <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
                       Žádné kategorie
                   </div>
               )}
