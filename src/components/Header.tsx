@@ -1,90 +1,118 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Search, ShoppingCart } from "lucide-react";
+import { ShoppingCart, Menu, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useStore } from "@/lib/context/store-context";
 import { useCart } from "@/lib/context/cart-context";
-import { useDebounce } from "@/lib/hooks/use-debounce";
-import { MobileNav } from "@/components/MobileNav";
-import { StoreSelector } from "@/components/StoreSelector";
+import { useStores } from "@/lib/queries";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useState } from "react";
+import { CategorySidebar } from "./CategorySidebar";
+import { SearchDialog } from "./SearchDialog";
+import { Link } from "react-router-dom";
 
-interface HeaderProps {
-  onSearch: (query: string) => void;
-}
+// Removed unused interface since onSearch is unused
+// interface HeaderProps {
+//   onSearch: (query: string) => void;
+// }
 
-export const Header = ({ onSearch }: HeaderProps) => {
-  const [localSearch, setLocalSearch] = useState("");
-  const { itemCount, setIsOpen } = useCart();
+export const Header = () => {
+  // Fix: use setStore instead of setSelectedStore
+  const { selectedStore, setStore } = useStore();
+  // Fix: fetch availableStores from useStores hook
+  const { data: availableStores = [] } = useStores();
   
-  // Debounce search input to avoid too many re-renders/fetches
-  const debouncedSearch = useDebounce(localSearch, 500);
+  const { items, setIsOpen: setCartOpen } = useCart();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    onSearch(debouncedSearch);
-  }, [debouncedSearch, onSearch]);
+  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center gap-2 sm:gap-4 px-4 md:px-6">
-        
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-16 items-center px-4 md:px-6">
         {/* Mobile Menu Trigger */}
-        <MobileNav />
-
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary cursor-pointer mr-auto md:mr-0 min-w-0">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground flex-shrink-0">
-                G
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="mr-2 md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-[300px]">
+            <SheetHeader className="p-4 border-b text-left">
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <div className="h-full py-2">
+               <CategorySidebar onSelect={() => setIsMobileMenuOpen(false)} />
             </div>
-            <span className="hidden sm:inline truncate">Grocer<span className="text-primary/70">App</span></span>
+          </SheetContent>
+        </Sheet>
+
+        {/* Logo */}
+        <Link to="/" className="mr-6 flex items-center space-x-2">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+             <span className="text-primary-foreground font-bold text-lg">N</span>
+          </div>
+          <span className="hidden font-bold sm:inline-block">NakupTady</span>
         </Link>
 
         {/* Store Selector */}
-        <StoreSelector />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="mr-4 hidden md:flex gap-2 min-w-[140px] justify-between">
+              <div className="flex items-center gap-2">
+                  <Store className="h-4 w-4" />
+                  <span className="truncate max-w-[100px]">
+                    {selectedStore 
+                        ? availableStores.find((s) => s.store === selectedStore)?.store.replace(/_/g, " ") 
+                        : "Všechny obchody"}
+                  </span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[200px]">
+            <DropdownMenuItem onClick={() => setStore(null)}>
+              Všechny obchody
+            </DropdownMenuItem>
+            {availableStores.map((storeInfo) => (
+              <DropdownMenuItem
+                key={storeInfo.store}
+                onClick={() => setStore(storeInfo.store)}
+                className="gap-2"
+              >
+                {/* Note: Store object structure is slightly different from previous assumptions (no color, id is store name) */}
+                <div className="h-2 w-2 rounded-full bg-primary" />
+                {storeInfo.store.replace(/_/g, " ")}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <div className="hidden md:flex flex-1 max-w-md relative mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-                placeholder="Hledat produkty..." 
-                className="pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all"
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-            />
+        {/* Search Bar - Now using SearchDialog */}
+        <div className="flex-1 md:w-auto md:flex-none">
+            <SearchDialog />
         </div>
 
-         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => document.getElementById('mobile-search')?.focus()}>
-                 <Search className="h-5 w-5" />
-             </Button>
-             
-             <div className="h-8 w-px bg-border mx-1 hidden md:block" />
-             
-             <Button 
-                size="sm" 
-                className="relative"
-                onClick={() => setIsOpen(true)}
-             >
-                <ShoppingCart className="sm:mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Košík</span>
-                {itemCount > 0 && (
-                    <Badge variant="secondary" className="absolute -top-1.5 -right-1.5 sm:static sm:ml-2 h-5 min-w-5 px-1 bg-white/20 text-white hover:bg-white/30 border-none rounded-full sm:rounded-md flex items-center justify-center">
-                        {itemCount}
-                    </Badge>
-                )}
-             </Button>
-         </div>
-      </div>
-      
-      {/* Mobile Search Bar (Below header on small screens) */}
-      <div className="md:hidden border-t p-2 bg-background">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-                id="mobile-search"
-                placeholder="Hledat produkty..." 
-                className="pl-9"
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-            />
+        {/* Right Actions */}
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setCartOpen(true)}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[11px] font-medium text-primary-foreground flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+            <span className="sr-only">Otevřít košík</span>
+          </Button>
         </div>
       </div>
     </header>

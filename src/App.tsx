@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { StoreProvider } from "@/lib/context/store-context";
@@ -15,20 +14,18 @@ import OrderSuccess from "@/pages/OrderSuccess";
 const queryClient = new QueryClient();
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState("");
-
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <CartProvider>
           <BrowserRouter>
             <div className="min-h-screen bg-background font-sans antialiased flex flex-col">
-              <Header onSearch={setSearchQuery} />
+              <Header />
               
               <Routes>
                 <Route 
                   path="/" 
-                  element={<MainLayout searchQuery={searchQuery} />} 
+                  element={<MainLayout />} 
                 />
                 <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route path="/checkout" element={<Checkout />} />
