@@ -27,6 +27,9 @@ const Index = () => {
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useCategories();
   
+  // Flatten categories for display/finding
+  const categoriesList = categoriesData ? Object.values(categoriesData).flat() : [];
+
   const { 
     data: productsData, 
     isLoading: isLoadingProducts, 
@@ -137,9 +140,9 @@ const Index = () => {
                     >
                         Vše
                     </Button>
-                    {categoriesData?.map((category) => (
+                    {categoriesList.map((category) => (
                         <Button
-                            key={category.id}
+                            key={`${category.store}-${category.id}`}
                             variant={selectedCategorySlug === category.slug ? "default" : "outline"}
                             onClick={() => handleCategorySelect(category.slug)}
                             className={cn(
@@ -160,7 +163,7 @@ const Index = () => {
              <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
                     {selectedCategorySlug 
-                        ? categoriesData?.find(c => c.slug === selectedCategorySlug)?.name 
+                        ? categoriesList.find(c => c.slug === selectedCategorySlug)?.name 
                         : "Všechny produkty"}
                     
                     {!isLoadingProducts && (

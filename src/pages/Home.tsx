@@ -22,8 +22,8 @@ const Index = () => {
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  // Filter categories based on product count if needed, or just display all
-  const activeCategories = categories || [];
+  // Handle the object structure from API (grouped by store)
+  const activeCategories = categories ? Object.values(categories).flat() : [];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

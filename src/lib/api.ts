@@ -1,6 +1,5 @@
 import axios from "axios";
 import {
-  CategoryWithCount,
   CategoriesResponse,
   PaginatedProductResponse,
   ProductWithCategories,
