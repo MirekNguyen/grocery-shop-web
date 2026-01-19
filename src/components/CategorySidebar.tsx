@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Store } from "lucide-react";
 
 interface CategoryItemProps {
   category: CategoryWithCount;
@@ -21,7 +21,6 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
   
-  // Calculate if we should auto-expand based on active state
   const shouldAutoExpand = useMemo(() => {
     if (active && hasSubcategories) return true;
     if (!hasSubcategories) return false;
@@ -66,8 +65,7 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
             onClick={handleLinkClick}
             className={cn(
                 "flex-1 flex items-center min-w-0 py-1.5 pr-2 select-none cursor-pointer",
-                // Simple indentation math
-                level === 0 ? "pl-3" : `pl-[${(level * 12) + 12}px]`
+                level === 0 ? "pl-3" : "pl-3"
             )}
             style={{ paddingLeft: level === 0 ? '0.75rem' : `${(level * 0.75) + 0.75}rem` }}
             title={category.name}
@@ -76,7 +74,6 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
                 {category.name}
             </span>
             
-            {/* Subtle Count */}
             <span className={cn(
                 "ml-2 text-[10px] tabular-nums opacity-60",
                 active ? "opacity-100" : "group-hover:opacity-100"
@@ -126,27 +123,27 @@ interface CategorySidebarProps {
 
 export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) => {
   const { selectedStore } = useStore();
+  // Only fetch if a store is selected to save resources, though the hook might run anyway.
+  // We can pass null/undefined which the hook should handle or we just ignore the result.
   const { data: categoriesData, isLoading } = useCategories(selectedStore);
   const [searchParams] = useSearchParams();
   const activeCategorySlug = searchParams.get("category");
 
   const categories = useMemo(() => {
-    if (!categoriesData) return [];
+    if (!selectedStore || !categoriesData) return [];
 
-    if (selectedStore && categoriesData[selectedStore]) {
+    if (categoriesData[selectedStore]) {
       return categoriesData[selectedStore];
     }
-
-    return Object.values(categoriesData)
-      .flat()
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return [];
   }, [categoriesData, selectedStore]);
 
   const isActive = useCallback((slug: string) => {
       return activeCategorySlug === slug;
   }, [activeCategorySlug]);
 
-  if (isLoading) {
+  // Loading state only matters if we are actually showing categories (i.e. a store is selected)
+  if (selectedStore && isLoading) {
     return (
       <div className={cn("bg-background", className)}>
         <div className="space-y-4 py-4">
@@ -183,21 +180,35 @@ export const CategorySidebar = ({ className, onSelect }: CategorySidebarProps) =
                >
                     Všechny produkty
                 </Link>
-              
-              {categories.length === 0 && selectedStore && (
-                  <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
-                      Žádné kategorie
-                  </div>
-              )}
 
-              {categories.map((category) => (
-                <CategoryItem 
-                    key={`${category.store}-${category.id}`} 
-                    category={category} 
-                    isActive={isActive} 
-                    onSelect={onSelect}
-                />
-              ))}
+              {!selectedStore ? (
+                  <div className="mt-8 px-4 flex flex-col items-center text-center text-muted-foreground animate-in fade-in-50">
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                        <Store className="h-6 w-6 opacity-50" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">Vyberte obchod</p>
+                      <p className="text-xs mt-1 max-w-[180px]">
+                        Pro zobrazení kategorií zvolte konkrétní obchod v horní liště.
+                      </p>
+                  </div>
+              ) : (
+                  <>
+                      {categories.length === 0 && (
+                          <div className="px-4 py-8 text-sm text-muted-foreground text-center border border-dashed rounded-lg bg-muted/20">
+                              Žádné kategorie
+                          </div>
+                      )}
+
+                      {categories.map((category) => (
+                        <CategoryItem 
+                            key={`${category.store}-${category.id}`} 
+                            category={category} 
+                            isActive={isActive} 
+                            onSelect={onSelect}
+                        />
+                      ))}
+                  </>
+              )}
             </div>
           </ScrollArea>
         </div>
