@@ -21,21 +21,24 @@ const CategoryItem = ({ category, isActive, level = 0, onSelect }: CategoryItemP
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const active = isActive(category.slug);
   
-  // Check if any descendant is active
-  const isChildActive = useMemo(() => {
+  // Check if any descendant is active OR if the current category is active
+  const shouldAutoExpand = useMemo(() => {
+    // If we are active and have subcategories, we should be expanded to show them
+    if (active && hasSubcategories) return true;
+
     if (!hasSubcategories) return false;
     const findActive = (cats: CategoryWithCount[]): boolean => {
         return cats.some(c => isActive(c.slug) || (c.subcategories && findActive(c.subcategories)));
     };
     return findActive(category.subcategories!);
-  }, [category, hasSubcategories, isActive]);
+  }, [category, hasSubcategories, isActive, active]);
 
-  // Sync expansion state with active children
+  // Sync expansion state with active children/self
   useEffect(() => {
-      if (isChildActive) {
+      if (shouldAutoExpand) {
           setIsExpanded(true);
       }
-  }, [isChildActive]);
+  }, [shouldAutoExpand]);
 
   const handleToggle = (e: React.MouseEvent) => {
       e.preventDefault();
